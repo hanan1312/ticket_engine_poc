@@ -1,0 +1,27 @@
+# Optional: systemd unit for the WhatsApp notifications service (notifications/server.js).
+# Only needed if WhatsApp notifications are switched on in Preferences.
+# Port 5050 must NOT be opened in the firewall -- only the Flask app on this machine uses it.
+[Unit]
+Description=Ticket Engine WhatsApp notifications service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ticketengine
+Group=ticketengine
+WorkingDirectory=/opt/ticket-engine/notifications
+Environment=NODE_PORT=5050
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=10
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# whatsapp-web.js keeps the paired session here
+ReadWritePaths=/opt/ticket-engine/notifications
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,32 @@
+# systemd unit for the Flask app under gunicorn.
+# Install: sudo cp deploy/ticket-engine.service /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable --now ticket-engine
+# Assumes the project is at /opt/ticket-engine, run by the system user "ticketengine"
+# (deploy/install.sh sets both up). Adjust the paths if you put it elsewhere.
+[Unit]
+Description=Ticket Engine (AssetFlow) web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ticketengine
+Group=ticketengine
+WorkingDirectory=/opt/ticket-engine
+EnvironmentFile=/etc/ticket-engine/ticket-engine.env
+ExecStart=/opt/ticket-engine/venv/bin/gunicorn --config deploy/gunicorn.conf.py demo.wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+
+# Hardening: the app only needs to write its database folder.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ticket-engine/database
+
+[Install]
+WantedBy=multi-user.target

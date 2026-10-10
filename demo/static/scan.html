@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120b24">
+<title>AssetFlow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%236d28d9'/%3E%3Cpath d='M6 7v10M9 7v10M12 7v10M12.5 7v10M16 7v10M18 7v10' stroke='%23d4a857' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+<!-- ======================= Auth screens ======================= -->
+<div id="auth-screen" class="auth-screen" hidden>
+  <div class="auth-panel">
+    <div class="auth-top">
+      <div class="auth-brand">
+        <div class="brand-mark"></div>
+        <div><h1 class="brand-name">AssetFlow</h1><p>Hotel operations suite</p></div>
+      </div>
+      <span class="secure-pill" title="Sign-in protected by the security policy set in HR → Policy">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Secure sign-in</span>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-banner" id="auth-banner" hidden>
+        <span class="ab-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>
+        <div><b>Notice</b><p id="auth-banner-text"></p></div>
+      </div>
+
+      <div class="auth-card" id="auth-login">
+        <p class="auth-eyebrow" id="auth-greeting">Welcome</p>
+        <h2>Sign in to your workspace</h2>
+        <p class="lead">Assets, tickets, stock and your team — all in one place.</p>
+        <label class="field"><span>Username</span>
+          <div class="input-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input id="login-username" type="text" placeholder="Your username" autocomplete="username" autocapitalize="none" spellcheck="false">
+          </div></label>
+        <label class="field"><span>Password</span>
+          <div class="input-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="login-password" type="password" placeholder="Your password" autocomplete="current-password">
+            <button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"></button>
+          </div>
+          <small class="caps-warn" hidden>Caps Lock is on</small></label>
+        <div class="auth-row">
+          <label class="check-row"><input type="checkbox" id="login-remember"> Remember me</label>
+          <a href="#" data-auth="forgot">Forgot password?</a>
+        </div>
+        <button id="login-btn" class="btn-primary btn-auth"><span class="btn-label">Sign in</span>
+          <svg class="btn-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="spinner sm"></span></button>
+        <p class="auth-msg" hidden></p>
+        <div class="auth-divider"><span>Trouble signing in?</span></div>
+        <a href="#" class="auth-alt" data-auth="recover">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          Can't access your account? <b>Ask an administrator</b></a>
+        <div class="auth-demo" id="auth-demo" hidden>
+          <p>Demo accounts — click to fill</p>
+          <div class="demo-chips">
+            <button type="button" data-demo="admin:admin123"><span class="avatar xs c-gold">A</span>admin<small>Administrator</small></button>
+            <button type="button" data-demo="tech:tech123"><span class="avatar xs c-blue">T</span>tech<small>Technician</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-card" id="auth-forgot" hidden>
+        <div class="auth-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
+        <h2>Reset your password</h2>
+        <p class="lead">Enter your username or recovery email. We'll email a link that lets you choose a new password (valid for 1 hour).</p>
+        <label class="field"><span>Username or recovery email</span>
+          <div class="input-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input id="forgot-identifier" type="text" autocomplete="username" autocapitalize="none">
+          </div></label>
+        <button id="forgot-btn" class="btn-primary btn-auth"><span class="btn-label">Send reset link</span><span class="spinner sm"></span></button>
+        <p class="auth-msg" hidden></p>
+        <a href="#" class="auth-back" data-auth="login">← Back to sign in</a>
+      </div>
+
+      <div class="auth-card" id="auth-reset" hidden>
+        <div class="auth-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h2>Choose a new password</h2>
+        <p class="lead">Your new password must meet your organisation's password policy.</p>
+        <label class="field"><span>New password</span>
+          <div class="input-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="reset-password" type="password" autocomplete="new-password" data-policy-check="reset"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"></button></div></label>
+        <div class="pw-policy" data-policy-for="reset"></div>
+        <label class="field"><span>Confirm new password</span>
+          <div class="input-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <input id="reset-confirm" type="password" autocomplete="new-password"></div></label>
+        <button id="reset-btn" class="btn-primary btn-auth"><span class="btn-label">Set password</span><span class="spinner sm"></span></button>
+        <p class="auth-msg" hidden></p>
+        <a href="#" class="auth-back" data-auth="login">← Back to sign in</a>
+      </div>
+
+      <div class="auth-card" id="auth-recover" hidden>
+        <div class="auth-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+        <h2>Request a new account</h2>
+        <p class="lead">Lost access to both your password and recovery email? An administrator will review this, deactivate the old account and issue you a new one.</p>
+        <div class="form-grid two">
+          <label class="field"><span>Full name</span><input id="recover-name" type="text" autocomplete="name"></label>
+          <label class="field"><span>Old username <em>(if known)</em></span><input id="recover-username" type="text" autocapitalize="none"></label>
+        </div>
+        <label class="field"><span>How can we reach you?</span><input id="recover-contact" type="text" placeholder="New email or phone number"></label>
+        <label class="field"><span>What happened? <em>(optional)</em></span><textarea id="recover-reason" rows="2"></textarea></label>
+        <button id="recover-btn" class="btn-primary btn-auth"><span class="btn-label">Send request to admin</span><span class="spinner sm"></span></button>
+        <p class="auth-msg" hidden></p>
+        <a href="#" class="auth-back" data-auth="login">← Back to sign in</a>
+      </div>
+
+      <div class="auth-card" id="auth-change" hidden>
+        <div class="auth-icon gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+        <h2>Set your own password</h2>
+        <p class="auth-msg" hidden></p>
+        <p class="lead" id="change-lead">You're using a temporary password. Choose a new one to continue.</p>
+        <label class="field"><span id="change-current-label">Temporary password</span>
+          <div class="input-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="change-current" type="password" autocomplete="current-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"></button></div></label>
+        <label class="field"><span>New password</span>
+          <div class="input-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            <input id="change-new" type="password" autocomplete="new-password" data-policy-check="change"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"></button></div></label>
+        <div class="pw-policy" data-policy-for="change"></div>
+        <label class="field"><span>Confirm new password</span>
+          <div class="input-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <input id="change-confirm" type="password" autocomplete="new-password"></div></label>
+        <button id="change-btn" class="btn-primary btn-auth"><span class="btn-label">Save and continue</span><span class="spinner sm"></span></button>
+        <a href="#" class="auth-back" id="change-logout">Sign out instead</a>
+      </div>
+    </div>
+
+    <footer class="auth-foot">
+      <span>© <span id="auth-year"></span> <span class="brand-name">AssetFlow</span></span>
+      <span class="auth-policy-chips" id="auth-policy-chips"></span>
+    </footer>
+  </div>
+
+  <div class="auth-art" aria-hidden="true">
+    <div class="aurora"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span></div>
+    <div class="art-grid"></div>
+
+    <div class="art-stage">
+      <div class="float-card fc-ticket">
+        <div class="fc-head"><span class="fc-ic violet"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Z"/></svg></span>
+          <div><b>Ticket #1042</b><small>Room 204 · AC unit</small></div><span class="fc-badge">In progress</span></div>
+        <div class="fc-steps"><span class="done"></span><span class="done"></span><span class="now"></span><span></span></div>
+        <div class="fc-steps-l"><small>Open</small><small>Assigned</small><small>Working</small><small>Resolved</small></div>
+      </div>
+      <div class="float-card fc-stock">
+        <div class="fc-head"><span class="fc-ic gold"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg></span>
+          <div><b>HVAC filters</b><small>SKU-00002 · 25 in stock</small></div></div>
+        <div class="fc-bars"><span style="height:40%"></span><span style="height:62%"></span><span style="height:48%"></span><span style="height:80%"></span><span style="height:66%"></span><span style="height:92%"></span><span style="height:74%"></span></div>
+      </div>
+      <div class="float-card fc-toast">
+        <span class="fc-ic green"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <div><b>Delivery confirmed</b><small>Work order #318 · scanned by Youssef</small></div>
+      </div>
+      <div class="float-card fc-barcode"><div class="bc"></div><small class="mono">AST-000204-k7q2</small></div>
+    </div>
+
+    <div class="art-copy">
+      <span class="art-kicker">Built for hotel operations</span>
+      <h2>Every asset, ticket and delivery — tracked end to end.</h2>
+      <ul>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Scan a barcode, raise a ticket, follow it from open to resolved.</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Expiry-aware stock, purchase orders and printable labels.</li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Role-based access — everyone sees exactly what their role allows.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= App shell ======================= -->
+<div id="app-shell" class="app-shell" hidden>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="sb-brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text"><span class="brand-name">AssetFlow</span><small>Operations suite</small></div>
+    </div>
+    <p class="sb-section">Workspace</p>
+    <nav class="sb-nav">
+      <button class="nav-item active" data-tab="dashboard" data-label="Dashboard" id="nav-dashboard">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span class="nav-label">Dashboard</span></button>
+      <button class="nav-item has-children" data-tab="assets" data-permission="assets" data-permission-hint="Add, edit, delete assets and register new ones" data-label="Assets" id="nav-assets" aria-expanded="false">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span class="nav-label">Assets</span>
+        <svg class="nav-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-children" id="nav-assets-children" role="group" aria-label="Assets sections">
+        <button class="nav-sub" data-sub-tab="assets" data-filter="all"><span class="nav-sub-label">All assets</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="assets" data-filter="good"><span class="nav-sub-label">Good</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="assets" data-filter="fair"><span class="nav-sub-label">Fair</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="assets" data-filter="broken"><span class="nav-sub-label">Broken</span><span class="count"></span></button>
+      </div>
+      <button class="nav-item has-children" data-tab="warehouse" data-permission="warehouse" data-permission-hint="Stock, purchase bills, batches and work orders" data-label="Warehouse" id="nav-warehouse" aria-expanded="false" hidden>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        <span class="nav-label">Warehouse</span>
+        <svg class="nav-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-children" id="nav-warehouse-children" role="group" aria-label="Warehouse sections">
+        <button class="nav-sub" data-sub-tab="warehouse" data-pane="wh-items"><span class="nav-sub-label">Items</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="warehouse" data-pane="wh-bills"><span class="nav-sub-label">Purchase bills</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="warehouse" data-pane="wh-batches"><span class="nav-sub-label">Batches &amp; barcodes</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="warehouse" data-pane="wh-orders"><span class="nav-sub-label">Work orders</span><span class="count"></span></button>
+      </div>
+      <button class="nav-item has-children" data-tab="hr" data-permission="hr-management" data-permission-hint="Employees, attendance, users, roles and policy" data-label="HR" id="nav-hr" aria-expanded="false" hidden>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">HR</span>
+        <svg class="nav-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-children" id="nav-hr-children" role="group" aria-label="HR sections">
+        <button class="nav-sub" data-sub-tab="hr" data-pane="hr-employees"><span class="nav-sub-label">Employees</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hr" data-pane="hr-attendance"><span class="nav-sub-label">Attendance</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hr" data-pane="hr-accounts"><span class="nav-sub-label">Users</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hr" data-pane="hr-roles"><span class="nav-sub-label">Roles</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hr" data-pane="hr-policy"><span class="nav-sub-label">Policy</span><span class="count"></span></button>
+      </div>
+      <button class="nav-item has-children" data-tab="hotel" data-permission="hotel" data-permission-hint="Edit buildings, floors, rooms and the site plan" data-label="Hotel architecture" id="nav-hotel" aria-expanded="false">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M15 9h2a2 2 0 0 1 2 2v10M9 7h2M9 11h2M9 15h2"/></svg>
+        <span class="nav-label">Hotel architecture</span>
+        <svg class="nav-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-children" id="nav-hotel-children" role="group" aria-label="Hotel architecture sections">
+        <button class="nav-sub" data-sub-tab="hotel" data-pane="ha-buildings"><span class="nav-sub-label">Buildings</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hotel" data-pane="ha-floors"><span class="nav-sub-label">Floors</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="hotel" data-pane="ha-rooms"><span class="nav-sub-label">Rooms</span><span class="count"></span></button>
+      </div>
+      <button class="nav-item has-children" data-tab="preferences" data-permission="preferences" data-permission-hint="Branding, WhatsApp and email settings" data-label="Preferences" id="nav-preferences" aria-expanded="false" hidden>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+        <span class="nav-label">Preferences</span>
+        <svg class="nav-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav-children" id="nav-preferences-children" role="group" aria-label="Preferences sections">
+        <button class="nav-sub" data-sub-tab="preferences" data-scroll="pref-card-branding"><span class="nav-sub-label">Branding</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="preferences" data-scroll="pref-card-whatsapp"><span class="nav-sub-label">WhatsApp</span><span class="count"></span></button>
+        <button class="nav-sub" data-sub-tab="preferences" data-scroll="pref-card-email"><span class="nav-sub-label">Email</span><span class="count"></span></button>
+      </div>
+    </nav>
+    <div class="sb-foot"><p class="version">Ticket Engine POC</p></div>
+  </aside>
+  <div class="sb-backdrop" id="sb-backdrop"></div>
+
+  <div class="main-col">
+    <header class="topbar">
+      <button class="icon-btn hamburger" id="menu-toggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+      <div class="page-head"><h1 id="page-title">Dashboard</h1><p id="page-sub"></p></div>
+      <div class="top-actions">
+        <button class="wa-pill" id="wa-pill" hidden title="WhatsApp pairing status">
+          <span class="dot"></span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span class="wa-label" id="wa-pill-text">WhatsApp</span>
+        </button>
+        <div class="dropdown">
+          <button class="icon-btn" id="bell-btn" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="bell-badge" id="bell-badge" hidden>0</span>
+          </button>
+          <div class="dropdown-menu notif-menu" id="notif-menu" hidden>
+            <div class="notif-head"><b>Notifications</b><button class="link-btn" id="notif-read-all">Mark all read</button></div>
+            <div class="notif-list" id="notif-list"></div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="user-btn" id="user-btn" aria-label="Account menu">
+            <span class="avatar" id="user-avatar">?</span>
+            <span class="user-meta"><b id="user-name"></b><small id="user-role"></small></span>
+          </button>
+          <div class="dropdown-menu" id="user-menu" hidden>
+            <div class="menu-head"><b id="menu-user-name"></b><small id="menu-user-login" class="mono"></small><small id="menu-user-email"></small></div>
+            <button class="menu-item" id="menu-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Change password</button>
+            <button class="menu-item danger" id="menu-logout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ======================= Dashboard ======================= -->
+      <section id="tab-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card" data-panel="assets" role="button" tabindex="0" aria-expanded="false" title="Click to see assets">
+            <div class="stat-icon" style="background:var(--primary-light);color:var(--primary)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6v12M8.5 6v12M11 6v12M13 6v12M16.5 6v12M19 6v12"/></svg></div>
+            <div><div class="stat-value" id="stat-assets">0</div><div class="stat-label">Assets tracked</div></div>
+            <svg class="stat-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="stat-card stat-slate" data-panel="open" role="button" tabindex="0" aria-expanded="false" title="Click to see open tickets">
+            <div class="stat-icon" style="background:var(--slate-bg);color:var(--slate)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+            <div><div class="stat-value" id="stat-open">0</div><div class="stat-label">Open tickets</div></div>
+            <svg class="stat-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="stat-card stat-warning" data-panel="progress" role="button" tabindex="0" aria-expanded="false" title="Click to see tickets in progress">
+            <div class="stat-icon" style="background:var(--warning-bg);color:var(--warning)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+            <div><div class="stat-value" id="stat-progress">0</div><div class="stat-label">In progress</div></div>
+            <svg class="stat-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="stat-card stat-success" data-panel="resolved" role="button" tabindex="0" aria-expanded="false" title="Click to see resolved tickets">
+            <div class="stat-icon" style="background:var(--success-bg);color:var(--success)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+            <div><div class="stat-value" id="stat-resolved">0</div><div class="stat-label">Resolved</div></div>
+            <svg class="stat-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="card stat-panel" id="stat-panel">
+          <div class="card-header">
+            <div class="icon-badge" id="stat-panel-icon"></div>
+            <h2 id="stat-panel-title"></h2>
+            <span class="muted" id="stat-panel-count"></span>
+            <button class="btn-outline btn-sm close-x" id="stat-panel-close" aria-label="Close">✕</button>
+          </div>
+          <div class="panel-list" id="stat-panel-list"></div>
+        </div>
+
+        <div class="card" id="my-deliveries-card" hidden>
+          <div class="card-header">
+            <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+            <h2>My deliveries</h2><span class="card-sub" id="my-deliveries-count"></span>
+          </div>
+          <div id="my-deliveries-list"></div>
+        </div>
+
+        <div class="main-grid">
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg></div>
+                <h2>Scan asset barcode</h2>
+              </div>
+              <div class="card-body">
+                <div class="hint-banner" style="margin-top:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  <span>A USB/Bluetooth scanner types the barcode + Enter straight into this box — the field stays focused between scans.</span>
+                </div>
+                <div class="scan-input-wrap">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>
+                  <input id="scan-input" type="text" placeholder="Scan or type a barcode, then press Enter" autocomplete="off">
+                </div>
+                <div class="asset-card" id="scan-result"><div class="asset-name"></div><div class="asset-meta"></div></div>
+                <div id="ticket-form-section" class="stacked" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border);">
+                  <p class="field-label">Raise a ticket for this asset</p>
+                  <div class="field-row">
+                    <input id="ticket-title" type="text" placeholder="What's wrong?">
+                    <select id="ticket-priority" style="flex:0 0 110px;" title="Priority"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High</option></select>
+                  </div>
+                  <textarea id="ticket-description" rows="2" placeholder="Details (optional) — symptoms, when it started, guest room number…"></textarea>
+                  <button id="create-ticket-btn" class="btn-primary">Create ticket</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" id="register-asset-card">
+              <div class="card-header">
+                <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <h2>Register a new asset</h2>
+              </div>
+              <div class="card-body stacked">
+                <input id="new-asset-name" type="text" placeholder="Asset name, e.g. 'Room 204 AC unit'">
+                <select id="new-asset-location" aria-label="Location"><option value="">— No location —</option></select>
+                <button id="create-asset-btn" class="btn-outline">+ Create asset &amp; mint barcode</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Z"/></svg></div>
+                <h2>Tickets</h2><span class="card-sub">click a ticket for its full history</span>
+              </div>
+              <div id="tickets-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <details class="log-card">
+          <summary>
+            <div class="icon-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
+            Activity log <span class="muted">— this session's actions (the server keeps the full audit trail)</span>
+          </summary>
+          <div id="log"></div>
+        </details>
+      </section>
+
+      <!-- ======================= Assets ======================= -->
+      <section id="tab-assets" hidden>
+        <div class="stats-grid cond-grid">
+          <div class="stat-card cond-card stat-success" data-cond="good" role="button" tabindex="0" aria-pressed="false" title="Show only assets in good condition">
+            <div class="stat-icon" style="background:var(--success-bg);color:var(--success)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+            <div><div class="stat-value" id="as-count-good">0</div><div class="stat-label">Good</div></div>
+          </div>
+          <div class="stat-card cond-card stat-warning" data-cond="fair" role="button" tabindex="0" aria-pressed="false" title="Show only assets in fair condition">
+            <div class="stat-icon" style="background:var(--warning-bg);color:var(--warning)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+            <div><div class="stat-value" id="as-count-fair">0</div><div class="stat-label">Fair</div></div>
+          </div>
+          <div class="stat-card cond-card stat-danger" data-cond="broken" role="button" tabindex="0" aria-pressed="false" title="Show only broken assets">
+            <div class="stat-icon" style="background:var(--danger-bg);color:var(--danger)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div><div class="stat-value" id="as-count-broken">0</div><div class="stat-label">Broken</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="toolbar">
+            <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg><input id="as-search" type="text" placeholder="Search name, category, location, comment…"></div>
+            <span class="filter-chip" id="as-filter-chip" hidden></span>
+            <span class="spacer"></span>
+            <button class="btn-primary" id="as-maintain-selected" hidden>Maintain selected</button>
+            <button class="btn-danger-outline admin-only" id="as-delete-selected" hidden>Delete selected</button>
+            <button class="btn-primary admin-only" id="as-new">+ Asset</button>
+          </div>
+          <div class="table-scroll"><table class="data-table" id="as-table"><thead>
+            <tr><th class="check admin-only"><input type="checkbox" id="as-all" aria-label="Select all"></th><th>ID</th><th>Asset</th><th class="hide-sm">Category</th><th>Condition</th><th>Location</th><th>Ticket</th><th class="hide-sm">Comment</th><th></th></tr>
+          </thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ======================= Warehouse ======================= -->
+      <section id="tab-warehouse" hidden>
+        <div class="subtabs" data-group="wh" role="tablist">
+          <button data-pane="wh-items" role="tab">Items</button>
+          <button data-pane="wh-bills" role="tab">Purchase bills</button>
+          <button data-pane="wh-batches" role="tab">Batches &amp; barcodes</button>
+          <button data-pane="wh-orders" role="tab">Work orders</button>
+        </div>
+
+        <div class="subpane" data-group="wh" data-pane="wh-items">
+          <div class="alert-banner" id="wh-low-banner" hidden>
+            <span class="ab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <div class="grow"><b>Low stock</b><span id="wh-low-text"></span></div>
+            <button class="btn-primary btn-sm" id="wh-low-bill">New bill for low stock</button>
+          </div>
+          <div class="card">
+            <div class="toolbar">
+              <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg><input id="wh-search" type="text" placeholder="Search items…"></div>
+              <span class="spacer"></span>
+              <button class="btn-primary" id="wh-new-item">+ New item</button>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="wh-items-table"><thead>
+              <tr><th>Item</th><th>Category</th><th class="num">Stock</th><th class="num hide-sm">Critical</th><th class="hide-sm">Unit</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="wh" data-pane="wh-bills" hidden>
+          <div class="card">
+            <div class="toolbar">
+              <div class="chips" id="wh-bill-filters">
+                <button data-filter="all">All</button><button data-filter="demanded">Awaiting approval</button>
+                <button data-filter="ordered">Approved</button><button data-filter="delivered">Delivered</button>
+              </div>
+              <span class="spacer"></span>
+              <button class="btn-outline" id="wh-low-bill-2">Low-stock bill</button>
+              <button class="btn-primary" id="wh-new-bill">+ New bill</button>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="wh-bills-table"><thead>
+              <tr><th>PO number</th><th>Item</th><th class="num">Qty</th><th class="num hide-sm">Total</th><th>Status</th><th class="hide-sm">Requested</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="wh" data-pane="wh-batches" hidden>
+          <div class="card">
+            <div class="toolbar">
+              <span class="muted">Batches are created by receiving a bill. Select rows to print their barcode labels.</span>
+              <span class="spacer"></span>
+              <button class="btn-primary" id="wh-print-selected" disabled>Print barcodes</button>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="wh-batches-table"><thead>
+              <tr><th class="check"><input type="checkbox" id="wh-batches-all" aria-label="Select all"></th><th>Barcode</th><th>Item</th><th>Expiry</th><th class="num">Remaining</th><th class="hide-sm">Status</th><th class="hide-sm">Received</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="wh" data-pane="wh-orders" hidden>
+          <div class="card">
+            <div class="card-body" style="padding-bottom:1rem">
+              <p class="field-label">Issue stock — scan a batch barcode to fulfil the approved work order for that item</p>
+              <div class="scan-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>
+                <input id="wh-scan-input" type="text" placeholder="Scan a batch barcode, then press Enter" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="toolbar"><span class="muted">Approving a work order names the employee who receives the items; they confirm receipt themselves.</span><span class="spacer"></span><button class="btn-primary" id="wh-new-wo">+ New work order</button></div>
+            <div class="table-scroll"><table class="data-table" id="wh-orders-table"><thead>
+              <tr><th>#</th><th>Item</th><th class="num">Issued</th><th class="hide-sm">Deliver to</th><th class="hide-sm">Delivery</th><th>Status</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= HR ======================= -->
+      <section id="tab-hr" hidden>
+        <div class="subtabs" data-group="hr" role="tablist">
+          <button data-pane="hr-employees" role="tab">Employees</button>
+          <button data-pane="hr-attendance" role="tab">Attendance</button>
+          <button data-pane="hr-accounts" role="tab">Users</button>
+          <button data-pane="hr-roles" role="tab">Roles</button>
+          <button data-pane="hr-policy" role="tab">Policy</button>
+        </div>
+
+        <div class="subpane" data-group="hr" data-pane="hr-employees">
+          <div class="card">
+            <div class="toolbar">
+              <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg><input id="hr-search" type="text" placeholder="Search employees…"></div>
+              <span class="spacer"></span>
+              <button class="btn-primary" id="hr-new-employee">+ Add employee</button>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="hr-employees-table"><thead>
+              <tr><th>Employee</th><th class="hide-sm">Phone</th><th class="hide-sm">Email</th><th>Account</th><th>Presence</th><th class="hide-sm">Status</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="hr" data-pane="hr-attendance" hidden>
+          <div class="card">
+            <div class="toolbar">
+              <label class="field" style="flex:1 1 220px"><span>Employee</span><select id="hr-att-employee"></select></label>
+              <label class="field" style="flex:0 1 170px"><span>From</span><input type="date" id="hr-att-from"></label>
+              <label class="field" style="flex:0 1 170px"><span>To</span><input type="date" id="hr-att-to"></label>
+              <span class="spacer"></span>
+              <button class="btn-primary" id="hr-att-clock" style="align-self:flex-end">Clock in</button>
+            </div>
+            <div class="card-body">
+              <div class="stat-tiles" id="hr-att-summary"></div>
+              <div class="mini-table"><table class="data-table" id="hr-sessions-table"><thead>
+                <tr><th>Clock in</th><th>Clock out</th><th class="num">Duration</th><th class="hide-sm">Recorded by</th></tr>
+              </thead><tbody></tbody></table></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="hr" data-pane="hr-accounts" hidden>
+          <div class="stats-grid user-stats" id="hr-user-stats"></div>
+          <div class="card">
+            <div class="toolbar">
+              <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg><input id="hr-user-search" type="text" placeholder="Search username, name or email…"></div>
+              <select id="hr-user-role" aria-label="Filter by role" style="flex:0 1 190px"><option value="">All roles</option></select>
+              <div class="chips" id="hr-user-filters">
+                <button data-filter="all" class="active">All</button><button data-filter="active">Active</button>
+                <button data-filter="pending">Awaiting first login</button><button data-filter="inactive">Deactivated</button>
+              </div>
+              <span class="spacer"></span>
+              <button class="btn-primary admin-only" id="hr-new-account">+ New user</button>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="hr-accounts-table"><thead>
+              <tr><th>User</th><th>Role</th><th>Presence</th><th class="hide-sm">Recovery email</th><th>Status</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+              <h2>Account recovery requests</h2><span class="card-sub">from people who couldn't recover their account — needs admin approval</span>
+            </div>
+            <div id="hr-requests-list"></div>
+            <div class="card-body" id="hr-requests-history" style="padding-top:0"></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="hr" data-pane="hr-roles" hidden>
+          <div class="hint-banner roles-hint">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>A role decides which left-panel tabs its users get and whether they can sign in at all. Editing a role updates everyone who has it the next time they load a page.</span>
+          </div>
+          <div class="role-grid" id="hr-role-grid"></div>
+          <div class="card">
+            <div class="card-header">
+              <div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>
+              <h2>Access matrix</h2><span class="card-sub">which tab each role can open</span>
+            </div>
+            <div class="table-scroll"><table class="data-table matrix-table" id="hr-role-matrix"></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="hr" data-pane="hr-policy" hidden>
+          <div class="policy-layout">
+            <div class="policy-main">
+              <div class="card">
+                <div class="card-header"><div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h2>Password rules</h2><span class="card-sub">checked whenever someone sets a password</span></div>
+                <div class="card-body">
+                  <div class="form-grid two">
+                    <label class="field"><span>Minimum length</span><div class="input-unit"><input id="pol-min-length" name="password_min_length" type="number" min="8" max="64"><em>chars</em></div><small>8 to 64.</small></label>
+                    <label class="field"><span>Password expires after</span><div class="input-unit"><input id="pol-expiry" name="password_expiry_days" type="number" min="0" max="3650"><em>days</em></div><small>0 = never. Expired passwords must be changed at the next sign-in.</small></label>
+                  </div>
+                  <div class="toggle-list">
+                    <label class="switch-row"><input type="checkbox" name="password_require_digit"><span class="switch"></span>Must mix letters and numbers</label>
+                    <label class="switch-row"><input type="checkbox" name="password_require_upper"><span class="switch"></span>Must include upper- and lower-case letters</label>
+                    <label class="switch-row"><input type="checkbox" name="password_require_symbol"><span class="switch"></span>Must include a symbol</label>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="icon-badge" style="background:var(--danger-bg);color:var(--danger)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h2>Sign-in protection &amp; sessions</h2></div>
+                <div class="card-body">
+                  <div class="form-grid three">
+                    <label class="field"><span>Lock after</span><div class="input-unit"><input name="lockout_threshold" type="number" min="1" max="50"><em>tries</em></div><small>Failed attempts within 15 minutes.</small></label>
+                    <label class="field"><span>Lock for</span><div class="input-unit"><input name="lockout_minutes" type="number" min="1" max="1440"><em>min</em></div><small>How long the username stays locked.</small></label>
+                    <label class="field"><span>Idle sign-out</span><div class="input-unit"><input name="idle_logout_timeout_minutes" type="number" min="0" max="1440"><em>min</em></div><small>No mouse or keyboard for this long signs the user out. 0 = off.</small></label>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="icon-badge" style="background:#fdf6e7;color:var(--gold-dark)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><h2>Sign-in page</h2></div>
+                <div class="card-body">
+                  <label class="field"><span>Notice shown above the sign-in form</span><textarea name="login_banner" rows="2" maxlength="500" placeholder="e.g. Scheduled maintenance tonight 22:00–23:00. Leave empty for none."></textarea></label>
+                  <div class="toggle-list"><label class="switch-row"><input type="checkbox" name="show_demo_accounts"><span class="switch"></span>Show the demo accounts on the sign-in page</label></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="icon-badge" style="background:var(--success-bg);color:var(--success)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h2>Attendance</h2></div>
+                <div class="card-body">
+                  <div class="form-grid two">
+                    <label class="field"><span>Standard hours per day</span><div class="input-unit"><input name="standard_work_hours_per_day" type="number" min="0" max="24" step="0.5"><em>h</em></div><small>Used as the "expected hours" in attendance.</small></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <aside class="policy-side">
+              <div class="card policy-preview">
+                <div class="card-header"><h2>What users will see</h2></div>
+                <div class="card-body">
+                  <div class="pp-login">
+                    <div class="pp-banner" id="pol-prev-banner" hidden></div>
+                    <div class="pp-field"></div><div class="pp-field"></div><div class="pp-btn">Sign in</div>
+                  </div>
+                  <p class="group-label">Password requirements</p>
+                  <ul class="pp-rules" id="pol-prev-rules"></ul>
+                  <p class="group-label">Protection</p>
+                  <ul class="pp-facts" id="pol-prev-facts"></ul>
+                </div>
+                <div class="card-footer">
+                  <span class="muted grow" id="pol-readonly" hidden>Only an admin can change the policy.</span>
+                  <button class="btn-outline" id="hr-reset-policy-btn">Revert</button>
+                  <button class="btn-primary" id="hr-save-policy-btn">Save policy</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= Hotel architecture ======================= -->
+      <section id="tab-hotel" hidden>
+        <div class="subtabs" data-group="ha" role="tablist">
+          <button data-pane="ha-buildings" role="tab">Buildings</button>
+          <button data-pane="ha-floors" role="tab">Floors</button>
+          <button data-pane="ha-rooms" role="tab">Rooms</button>
+        </div>
+        <div class="ha-actions">
+          <button class="btn-primary" id="ha-open-board">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 8h4v4H7zM14 8l3 4h-3z"/></svg>
+            Open whiteboard</button>
+          <button class="btn-outline" id="ha-print">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print design (PDF)</button>
+          <span class="spacer"></span>
+          <button class="btn-outline admin-only" id="ha-new-building">+ New building</button>
+        </div>
+
+        <div class="subpane" data-group="ha" data-pane="ha-buildings">
+          <div class="card">
+            <div class="table-scroll"><table class="data-table" id="ha-buildings-table"><thead>
+              <tr><th>ID</th><th>Building</th><th class="num">Floors</th><th class="num">Rooms</th><th class="hide-sm">Rooms on each floor</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="ha" data-pane="ha-floors" hidden>
+          <div class="card">
+            <div class="toolbar">
+              <label class="field" style="flex:0 1 240px"><span>Building</span><select id="ha-floors-building"></select></label>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="ha-floors-table"><thead>
+              <tr><th>ID</th><th>Floor</th><th class="hide-sm">Building</th><th class="num">Rooms</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+          </div>
+        </div>
+
+        <div class="subpane" data-group="ha" data-pane="ha-rooms" hidden>
+          <div class="card">
+            <div class="toolbar">
+              <div class="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg><input id="ha-rooms-search" type="text" placeholder="Search rooms, e.g. 204 or A_2…"></div>
+              <label class="field" style="flex:0 1 240px"><span>Building</span><select id="ha-rooms-building"></select></label>
+            </div>
+            <div class="table-scroll"><table class="data-table" id="ha-rooms-table"><thead>
+              <tr><th>ID</th><th>Room number</th><th>Floor</th><th class="hide-sm">Building</th><th></th></tr>
+            </thead><tbody></tbody></table></div>
+            <p class="muted ha-more" id="ha-rooms-more" hidden></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= Preferences ======================= -->
+      <section id="tab-preferences" hidden>
+        <div class="pref-grid">
+          <div class="card" id="pref-card-branding">
+            <div class="card-header"><div class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><h2>Branding</h2></div>
+            <div class="card-body">
+              <label class="field"><span>Company name</span>
+                <div class="field-row"><input id="pref-company-name" type="text" placeholder="Company name"><button id="pref-save-name-btn" class="btn-primary">Save</button></div>
+              </label>
+              <p class="group-label">Logo</p>
+              <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap">
+                <div class="logo-preview" id="pref-logo-preview"></div>
+                <div>
+                  <label class="btn-outline" for="pref-logo-file">Choose image</label>
+                  <input id="pref-logo-file" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+                  <button id="pref-remove-logo-btn" class="btn-danger-outline btn-sm" hidden>Remove</button>
+                  <p class="muted" style="margin:.5rem 0 0">PNG, JPG, SVG or WebP — up to 2MB. Shown in the sidebar and on the sign-in screen.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="pref-card-whatsapp">
+            <div class="card-header"><div class="icon-badge" style="background:#ecfdf5;color:#16a34a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div><h2>WhatsApp notifications</h2></div>
+            <div class="card-body">
+              <label class="field"><span>Sending WhatsApp number</span><input id="pref-wa-number" type="text" inputmode="tel" placeholder="International format, e.g. 201012345678"><small>The business phone that will be paired with the notifications service.</small></label>
+              <div class="toggle-list"><label class="switch-row"><input type="checkbox" id="pref-wa-enabled"><span class="switch"></span>Send notifications over WhatsApp</label></div>
+              <div id="pref-wa-state" class="wa-state off"></div>
+            </div>
+            <div class="card-footer">
+              <button class="btn-outline" id="pref-wa-check" hidden>Check pairing / QR</button>
+              <button class="btn-primary" id="pref-wa-save">Save</button>
+            </div>
+          </div>
+          <div class="card pref-wide" id="pref-card-email">
+            <div class="card-header"><div class="icon-badge" style="background:#eff6ff;color:#2563eb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div><h2>Email (password resets &amp; account emails)</h2><span class="card-sub" id="pref-mail-source"></span></div>
+            <div class="card-body">
+              <div id="pref-mail-state" class="wa-state off"></div>
+              <p class="group-label">Provider</p>
+              <div class="chips" id="pref-mail-presets">
+                <button type="button" data-preset="gmail">Gmail</button>
+                <button type="button" data-preset="outlook">Outlook / Microsoft 365</button>
+                <button type="button" data-preset="custom">Other (custom)</button>
+              </div>
+              <div class="hint-banner" id="pref-mail-hint" hidden></div>
+              <div class="form-grid mail-grid" style="margin-top:1rem">
+                <label class="field"><span>SMTP server</span><input id="pref-mail-host" type="text" placeholder="e.g. smtp.gmail.com"></label>
+                <label class="field"><span>Port</span><input id="pref-mail-port" type="number" min="1" max="65535" placeholder="587"></label>
+                <label class="field"><span>Security</span><select id="pref-mail-security"><option value="starttls">STARTTLS (port 587)</option><option value="ssl">SSL/TLS (port 465)</option><option value="none">None</option></select></label>
+                <label class="field"><span>Username</span><input id="pref-mail-user" type="text" placeholder="usually the full email address" autocomplete="off"></label>
+                <label class="field"><span>Password / app password</span><input id="pref-mail-password" type="password" autocomplete="new-password"></label>
+                <label class="field"><span>From address</span><input id="pref-mail-from" type="email" placeholder="defaults to the username"></label>
+                <label class="field"><span>From name</span><input id="pref-mail-from-name" type="text" placeholder="defaults to the company name"></label>
+              </div>
+            </div>
+            <div class="card-footer mail-footer">
+              <div class="field-row grow"><input id="pref-mail-test-to" type="email" placeholder="Send a test to… (your email)"><button class="btn-outline" id="pref-mail-test">Send test email</button></div>
+              <button class="btn-danger-outline" id="pref-mail-disable" hidden>Turn off</button>
+              <button class="btn-primary" id="pref-mail-save">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ======================= Hotel whiteboard ======================= -->
+<div class="wb-overlay" id="wb-overlay" hidden role="dialog" aria-modal="true" aria-label="Site plan whiteboard">
+  <div class="wb-bar">
+    <div class="wb-title"><b>Site plan</b><small id="wb-hint">Drag to move · corner handles resize · click a building to open it</small></div>
+    <div class="dropdown wb-editor">
+      <button class="btn-primary btn-sm" id="wb-add-btn">+ Add shape</button>
+      <div class="dropdown-menu wb-shape-menu" id="wb-add-menu" hidden></div>
+    </div>
+    <div class="wb-zoom">
+      <button class="icon-btn sm" id="wb-zoom-out" aria-label="Zoom out">−</button>
+      <button class="link-btn" id="wb-zoom-fit" title="Fit to screen"><span id="wb-zoom-label">100%</span></button>
+      <button class="icon-btn sm" id="wb-zoom-in" aria-label="Zoom in">+</button>
+    </div>
+    <button class="btn-outline btn-sm" id="wb-print">Print PDF</button>
+    <button class="icon-btn sm" id="wb-close" aria-label="Close whiteboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="wb-main">
+    <div class="wb-canvas" id="wb-canvas"><svg id="wb-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <aside class="wb-panel" id="wb-panel"></aside>
+  </div>
+</div>
+
+<!-- ======================= Modal + toasts ======================= -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <div style="min-width:0; flex:1">
+        <button class="link-btn" id="modal-back" style="display:none; font-size:0.78rem; margin-bottom:0.35rem;">← Back</button>
+        <h2 id="modal-title"></h2>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <div class="head-actions"><button class="icon-btn sm" id="modal-close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<script src="/static/js/core.js"></script>
+<script src="/static/js/print.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/warehouse.js"></script>
+<script src="/static/js/hr.js"></script>
+<script src="/static/js/hotel.js"></script>
+<script src="/static/js/assets.js"></script>
+<script src="/static/js/preferences.js"></script>
+<script>boot();</script>
+</body>
+</html>
