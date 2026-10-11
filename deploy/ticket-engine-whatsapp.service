@@ -12,6 +12,10 @@ User=ticketengine
 Group=ticketengine
 WorkingDirectory=/opt/ticket-engine/notifications
 Environment=NODE_PORT=5050
+# Chrome writes its profile/cache under $HOME; keep that inside the writable folder below.
+Environment=HOME=/opt/ticket-engine/notifications
+# Optional: force a specific browser (otherwise google-chrome, chromium, then puppeteer's own).
+#Environment=PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=10

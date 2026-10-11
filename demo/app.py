@@ -1,15 +1,14 @@
 import os
 import secrets
 import sys
-from html.parser import HTMLParser
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from auth_engine import (
-    User, auth_engine_bp, get_current_user, infer_role_key, register_permission,
+    User, auth_engine_bp, display_name, get_current_user, infer_role_key,
     register_presence_enforcement, register_recovery_request_hook, register_reset_undelivered_hook,
     seed_default_roles, set_mail_config_provider, set_policy_provider, set_profile_provider,
 )
@@ -21,11 +20,12 @@ from notifications_client import send_whatsapp
 from shared_db import upgrade_schema
 from ticket_engine import (
     Ticket, TicketEvent, db, register_post_transition_hook, register_pre_transition_hook,
-    ticket_engine_bp,
+    register_ticket_event_hook, ticket_engine_bp,
 )
 from ticket_engine.workflow import TransitionWarning
 from warehouse import WarehouseItem, warehouse_bp
 from warehouse import pdf as warehouse_pdf
+import ui_config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(os.path.dirname(BASE_DIR), 'database', 'ticket_engine.db')
@@ -137,6 +137,58 @@ def restore_condition_on_resolve(ticket, from_status, to_status):
     db.session.commit()
 
 
+def notify_on_ticket_event(ticket, event, actor, **info):
+    """In-app (+ WhatsApp, when on) notifications for assignment changes, referral requests and
+    decisions, and comments -- to the people involved, never to the person who did it. The new
+    assignee's "New ticket assigned" message comes from notify_on_ticket_transition."""
+    ref = f'#{ticket.id} "{ticket.title}"'
+    who = display_name(actor)
+
+    def send(users, title, body=None, kind='info'):
+        notify([u for u in users if u is not None and u.id != actor.id], title, body, kind=kind,
+               link_type='ticket', link_id=ticket.id)
+
+    def admins():
+        return [u for u in User.query.filter_by(role='admin').all() if u.is_active is not False]
+
+    if event == 'assigned':
+        previous, assignee = info.get('previous'), info['assignee']
+        note = f" Note: {info['note']}" if info.get('note') else ''
+        if previous is not None and previous.id != assignee.id:
+            send([previous], f'Ticket {ref} was reassigned',
+                 f'{who} assigned it to {display_name(assignee)}. You no longer need to work on it.{note}')
+        if ticket.created_by is not None and ticket.created_by.id != assignee.id:
+            send([ticket.created_by], f'Your ticket {ref} is assigned to {display_name(assignee)}', note.strip() or None)
+    elif event == 'referral_requested':
+        r = info['referral']
+        target = display_name(r.to_user) if r.to_user else 'someone else (your choice)'
+        send(admins(), f'Referral request for ticket {ref}',
+             f'{who} asks to hand it to {target}. Reason: {r.reason}', kind='warning')
+    elif event == 'referral_approved':
+        r, assignee = info['referral'], info['assignee']
+        note = f' Note from {who}: {r.decision_note}' if r.decision_note else ''
+        send([r.requested_by], f'Referral approved: ticket {ref} now goes to {display_name(assignee)}',
+             f'You no longer need to work on it.{note}', kind='success')
+        send([u for u in admins() if u.id != actor.id], f'Referral for ticket {ref} approved by {who}',
+             f'Assigned to {display_name(assignee)}.')
+        if ticket.created_by is not None and ticket.created_by.id not in (assignee.id, r.requested_by_id):
+            send([ticket.created_by], f'Your ticket {ref} is now assigned to {display_name(assignee)}')
+    elif event == 'referral_rejected':
+        r = info['referral']
+        note = f' Note from {who}: {r.decision_note}' if r.decision_note else ''
+        send([r.requested_by], f'Referral declined: ticket {ref} stays with you',
+             f'Please carry on with it.{note}', kind='warning')
+        send([u for u in admins() if u.id != actor.id], f'Referral for ticket {ref} declined by {who}')
+    elif event == 'referral_cancelled':
+        r, reason = info['referral'], info.get('reason')
+        if reason == 'withdrawn':
+            send(admins(), f'Referral request for ticket {ref} withdrawn', f'{who} will keep working on it.')
+        else:
+            send([r.requested_by], f'Your referral request for ticket {ref} was closed', r.decision_note)
+    elif event == 'comment':
+        send([ticket.assigned_to, ticket.created_by], f'New comment on ticket {ref}', f'{who}: {info["note"]}')
+
+
 def whatsapp_delivery_hook(user, title, body):
     """Mirrors in-app notifications (warehouse approvals/deliveries, recovery requests) to
     WhatsApp when the service is switched on and the user has a phone on file. Best-effort --
@@ -161,33 +213,6 @@ def notify_admins_of_undelivered_reset(user, identifier, reason):
                   f'Reason: {reason}. ' + ('Open HR → Accounts & security → this account → "Issue temporary password".'
                                            if user else 'Check the name with the person who asked.'),
                   kind='warning', link_type='account' if user else None, link_id=user.id if user else None)
-
-
-class _SidebarPermissions(HTMLParser):
-    """Collects (permission, label, hint) from the sidebar's <button class="nav-item"
-    data-permission="..." data-label="..." data-permission-hint="...">."""
-
-    def __init__(self):
-        super().__init__()
-        self.found = []
-
-    def handle_starttag(self, tag, attrs):
-        a = dict(attrs)
-        if tag == 'button' and 'nav-item' in (a.get('class') or '').split() and a.get('data-permission'):
-            self.found.append((a['data-permission'], a.get('data-label') or a['data-permission'],
-                               a.get('data-permission-hint') or ''))
-
-
-def register_sidebar_permissions():
-    """One grantable permission per sidebar tab, read from the page itself: adding a tab to
-    the sidebar with a data-permission attribute is all it takes for it to appear in HR ->
-    Accounts -> "Fine-tune permissions" (and be accepted by the API). The tab's own routes
-    still have to check that permission (@require_permission) to actually be protected."""
-    parser = _SidebarPermissions()
-    with open(os.path.join(BASE_DIR, 'static', 'scan.html'), encoding='utf-8') as f:
-        parser.feed(f.read())
-    for key, label, hint in parser.found:
-        register_permission(key, label, hint)
 
 
 def create_app():
@@ -224,8 +249,26 @@ def create_app():
     warehouse_pdf.set_logo_provider(lambda: get_settings().logo_data)
     register_post_transition_hook(notify_on_ticket_transition)
     register_post_transition_hook(restore_condition_on_resolve)
+    register_ticket_event_hook(notify_on_ticket_event)
     register_presence_enforcement(app)
-    register_sidebar_permissions()
+
+    # Tabs, sub-tabs, names and sign-in texts come from config/ui.json (see demo/ui_config.py).
+    # Checking it before each request picks up edits -- and re-registers one grantable
+    # permission per visible tab -- without a restart.
+    ui_config.current()
+
+    @app.before_request
+    def refresh_ui_config():
+        ui_config.current()  # must not return anything: a before_request return value is the response
+
+    # Outside /api/ on purpose: the sign-in screen needs it too, so it must never be refused
+    # by the session checks (stale heartbeat, forced password change) that guard /api/.
+    @app.route('/ui-config.json')
+    def get_ui_config():
+        config, warnings = ui_config.current()
+        user = get_current_user()
+        # Problems in the file are for whoever maintains it, not every visitor.
+        return jsonify({**config, 'warnings': warnings if user is not None and user.role == 'admin' else []})
 
     @app.route('/')
     def index():

@@ -28,6 +28,23 @@ const ICONS = {
   edit: '<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   refresh: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
   whatsapp: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  // Tab icons -- the names config/ui.json's "icon" can use (or give raw SVG markup instead).
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  package: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  building: '<path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M15 9h2a2 2 0 0 1 2 2v10M9 7h2M9 11h2M9 15h2"/>',
+  sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  home: '<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  chart: '<path d="M12 20V10M18 20V4M6 20v-4"/>',
+  clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  map: '<path d="m1 6 7-4 8 4 7-4v16l-7 4-8-4-7 4z"/><path d="M8 2v16M16 6v16"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  caretDown: '<path d="m6 9 6 6 6-6"/>',
 };
 function icon(name, size = 16, extra = '') {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[name] || ''}</svg>`;
@@ -212,20 +229,146 @@ document.getElementById('modal-back').addEventListener('click', () => {
 });
 
 // ---- Layout: sidebar, tabs, sub-tabs ----
-const TAB_META = {
-  dashboard: { title: 'Dashboard', sub: 'Assets, tickets and their lifecycle' },
-  assets: { title: 'Assets', sub: 'Condition, location and maintenance of every asset' },
-  warehouse: { title: 'Warehouse', sub: 'Stock, purchase bills, batches and work orders' },
-  hr: { title: 'HR', sub: 'Employees, attendance, users, roles and policy' },
-  hotel: { title: 'Hotel architecture', sub: 'Buildings, floors, rooms and the site plan' },
-  preferences: { title: 'Preferences', sub: 'Branding, WhatsApp notifications and email' },
-};
+// Which tabs and sub-tabs exist, their names, icons, order and page titles all come from
+// config/ui.json (served as /ui-config.json, see demo/ui_config.py); buildNavigation() turns
+// it into the sidebar and the sub-tab bars. The tabs' own content stays in scan.html.
+let uiConfig = null;
+const TAB_META = {};   // tab id -> { title, sub }, from the config
+const PANE_META = {};  // sub-tab id -> { title, sub }, for sub-tabs with their own page
 const TAB_LOADERS = {};  // filled by each tab's file
 let currentTab = 'dashboard';
 const MOBILE_QUERY = window.matchMedia('(max-width: 900px)');
 
 function storageGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function storageSet(key, value) { try { localStorage.setItem(key, value); } catch { /* private mode */ } }
+
+async function loadUiConfig() {
+  try {
+    const res = await fetch('/ui-config.json', { credentials: 'same-origin' });
+    if (res.ok) return await res.json();
+  } catch { /* offline */ }
+  return null;
+}
+
+// A config icon is either a name from ICONS or raw SVG markup (paths, circles...).
+function tabIcon(value, size = 19) {
+  const inner = String(value || '').trim().startsWith('<') ? value : (ICONS[value] || ICONS.file);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
+function tabLabel(id) {
+  const tab = uiConfig && uiConfig.tabs.find(t => t.id === id);
+  return tab ? tab.label : id;
+}
+
+// Content of a custom (config-defined) tab or sub-tab: a page of HTML or an embedded URL.
+// type "link" has no content -- clicking it opens the URL instead.
+function customContent(entry) {
+  if (entry.type === 'iframe') {
+    return `<div class="card custom-embed"><iframe src="${esc(entry.url)}" title="${esc(entry.label)}" loading="lazy" referrerpolicy="no-referrer"></iframe></div>`;
+  }
+  return `<div class="card custom-page"><div class="card-body">${entry.html || ''}</div></div>`;
+}
+
+// Where a built-in sub-tab link points: data-pane (real sub-tab), data-filter (Assets
+// condition filter) or data-scroll (Preferences card).
+function navSubTarget(tab, child) {
+  if (child.type === 'link') return `data-link="${esc(child.url)}"`;
+  if (tab.kind === 'filter') return `data-filter="${esc(child.id)}"`;
+  if (tab.kind === 'scroll') return `data-scroll="pref-card-${esc(child.id)}"`;
+  return `data-pane="${esc(child.id)}"`;
+}
+
+function buildNavigation(config) {
+  uiConfig = config;
+  const { app, login, tabs } = config;
+  document.getElementById('sb-subtitle').textContent = app.sidebar_subtitle;
+  document.getElementById('sb-section').textContent = app.sidebar_section;
+  document.getElementById('sb-footer').textContent = app.footer;
+  document.getElementById('login-tagline').textContent = login.tagline;
+  document.getElementById('login-heading').textContent = login.heading;
+  document.getElementById('login-lead').textContent = login.lead;
+  document.getElementById('login-art-kicker').textContent = login.art_kicker;
+  document.getElementById('login-art-heading').textContent = login.art_heading;
+  document.getElementById('login-art-points').innerHTML = login.art_points.map(p => `<li>${icon('check', 18, 'stroke-width="2.2"')}${esc(p)}</li>`).join('');
+
+  // Every built-in section starts hidden; a tab left out of the config simply never shows.
+  document.querySelectorAll('main.content > section[id^="tab-"]').forEach(sec => { sec.hidden = true; });
+  const content = document.querySelector('main.content');
+  const nav = [];
+  tabs.forEach(tab => {
+    const hasChildren = tab.children.length > 0;
+    const attrs = [`data-label="${esc(tab.label)}"`, `id="nav-${esc(tab.id)}"`];
+    if (tab.type === 'link') attrs.push(`data-link="${esc(tab.url)}"`); else attrs.push(`data-tab="${esc(tab.id)}"`);
+    if (tab.permission) attrs.push(`data-permission="${esc(tab.permission)}"`, `data-permission-hint="${esc(tab.description)}"`);
+    if (hasChildren) attrs.push('aria-expanded="false"');
+    nav.push(`<button class="nav-item${hasChildren ? ' has-children' : ''}" ${attrs.join(' ')}>
+      ${tabIcon(tab.icon)}<span class="nav-label">${esc(tab.label)}</span>
+      ${hasChildren ? icon('caretDown', 15, 'class="nav-caret" stroke-width="2.2"') : ''}</button>`);
+    if (hasChildren) {
+      nav.push(`<div class="nav-children" id="nav-${esc(tab.id)}-children" role="group" aria-label="${esc(tab.label)} sections">
+        ${tab.children.map(c => `<button class="nav-sub" data-sub-tab="${esc(tab.id)}" ${navSubTarget(tab, c)}><span class="nav-sub-label">${esc(c.label)}</span><span class="count"></span></button>`).join('')}
+      </div>`);
+    }
+    if (tab.type === 'link') return;
+    TAB_META[tab.id] = { title: tab.title, sub: tab.subtitle };
+
+    // Custom tab: its section is created here. Built-in ones already exist in scan.html.
+    let section = document.getElementById('tab-' + tab.id);
+    if (!section) {
+      section = document.createElement('section');
+      section.id = 'tab-' + tab.id;
+      section.hidden = true;
+      section.innerHTML = tab.kind === 'pane' ? `<div class="subtabs" data-group="${esc(tab.group)}" role="tablist"></div>` : customContent(tab);
+      content.appendChild(section);
+      if (tab.kind === 'pane') TAB_LOADERS[tab.id] = () => switchSubtab(tab.group, currentSubtab(tab.group));
+    }
+
+    if (tab.kind === 'pane') {
+      section.querySelector('.subtabs').innerHTML = tab.children.map(c => c.type === 'link'
+        ? `<button data-link="${esc(c.url)}">${esc(c.label)} ${icon('link', 12)}</button>`
+        : `<button data-pane="${esc(c.id)}" role="tab">${esc(c.label)}</button>`).join('');
+      tab.children.forEach(c => {
+        if (c.type === 'link') return;
+        PANE_META[c.id] = { title: c.title, sub: c.subtitle || tab.subtitle };
+        if (c.builtin) return;
+        const pane = document.createElement('div');
+        pane.className = 'subpane';
+        pane.dataset.group = tab.group;
+        pane.dataset.pane = c.id;
+        pane.hidden = true;
+        pane.innerHTML = customContent(c);
+        section.appendChild(pane);
+      });
+    } else if (tab.kind === 'filter') {
+      // Assets: a hidden condition filter takes its stat card with it.
+      section.querySelectorAll('.cond-card[data-cond]').forEach(card => { card.hidden = !tab.children.some(c => c.id === card.dataset.cond); });
+    } else if (tab.kind === 'scroll') {
+      // Preferences: a hidden section hides its card too.
+      section.querySelectorAll('[id^="pref-card-"]').forEach(card => { card.hidden = !tab.children.some(c => `pref-card-${c.id}` === card.id); });
+    }
+  });
+  document.getElementById('sb-nav').innerHTML = nav.join('');
+}
+
+// Problems in config/ui.json (only sent to admins): shown once per sign-in.
+async function reportUiConfigWarnings() {
+  if (!isAdmin()) return;
+  const fresh = await loadUiConfig();
+  const warnings = (fresh && fresh.warnings) || [];
+  if (!warnings.length) return;
+  warnings.forEach(w => console.warn('config/ui.json:', w));
+  toast(`config/ui.json has ${warnings.length} problem${warnings.length === 1 ? '' : 's'}: ${warnings[0]}${warnings.length > 1 ? ' (see the browser console for the rest)' : ''}`, 'error', 12000);
+}
+
+function openNavLink(url) { window.open(url, '_blank', 'noopener'); }
+
+// The first tab this user may open: the config's default_tab if allowed, else the first visible one.
+function firstAllowedTab() {
+  const visible = id => { const btn = document.getElementById('nav-' + id); return btn && !btn.hidden && btn.dataset.tab; };
+  if (uiConfig && visible(uiConfig.app.default_tab)) return uiConfig.app.default_tab;
+  const first = document.querySelector('.nav-item[data-tab]:not([hidden])');
+  return first ? first.dataset.tab : null;
+}
 
 function applySidebarState() {
   const shell = document.getElementById('app-shell');
@@ -244,10 +387,11 @@ document.getElementById('sb-backdrop').addEventListener('click', () => document.
 MOBILE_QUERY.addEventListener('change', () => { document.getElementById('app-shell').classList.remove('sb-open'); applySidebarState(); });
 
 // Sidebar groups: a tab button with .has-children is followed by .nav-children holding its
-// .nav-sub links. A link does one of three things, by attribute:
-//   data-pane="wh-items"            open that sub-tab (Warehouse, HR, Hotel architecture)
+// .nav-sub links. A link does one of four things, by attribute:
+//   data-pane="wh-items"            open that sub-tab (Warehouse, HR, Hotel architecture, custom tabs)
 //   data-filter="broken"            run the tab's NAV_FILTERS handler (Assets condition filter)
 //   data-scroll="pref-card-email"   scroll to that card (Preferences sections)
+//   data-link="https://..."         open that address in a new browser tab (config "type": "link")
 // The group opens when its tab is shown; clicking the tab button again folds it.
 const NAV_FILTERS = {};  // tab -> fn(value), filled by the tab's file
 function setNavGroupOpen(tab, open) {
@@ -257,25 +401,79 @@ function setNavGroupOpen(tab, open) {
   btn.classList.toggle('open', open);
 }
 
+// ---- Back navigation ----
+// Every tab / sub-tab change is remembered so the top bar's Back button (and the phone's back
+// gesture / browser Back, via history.pushState) returns to the previous page. A location is
+// {tab, pane}: pane is the tab's sub-tab, or null for tabs without sub-tabs.
+const navStack = [];
+let navCurrent = null, navRestoring = false;
+function tabGroup(tab) { const bar = document.querySelector(`#tab-${tab} .subtabs`); return bar ? bar.dataset.group : null; }
+function groupTab(group) { const bar = document.querySelector(`.subtabs[data-group="${group}"]`); const sec = bar && bar.closest('section'); return sec ? sec.id.slice(4) : null; }
+function navLabel(loc) { return loc.pane && PANE_META[loc.pane] ? PANE_META[loc.pane].title : (TAB_META[loc.tab] || {}).title || loc.tab; }
+function navVisit(tab, pane) {
+  if (!tab) return;
+  const loc = { tab, pane: pane || null };
+  if (navCurrent && navCurrent.tab === loc.tab && navCurrent.pane === loc.pane) return;
+  if (navCurrent && !navRestoring) {
+    navStack.push(navCurrent);
+    if (navStack.length > 50) navStack.shift();
+    try { history.pushState({ nav: navStack.length }, ''); } catch { /* sandboxed */ }
+  }
+  navCurrent = loc;
+  renderBackButton();
+}
+function renderBackButton() {
+  const btn = document.getElementById('nav-back');
+  const prev = navStack[navStack.length - 1];
+  btn.hidden = !prev;
+  if (prev) { btn.title = `Back to ${navLabel(prev)}`; btn.setAttribute('aria-label', btn.title); }
+}
+function navBack() {
+  const loc = navStack.pop();
+  if (!loc) return;
+  navRestoring = true;
+  try {
+    const group = tabGroup(loc.tab);
+    if (group && loc.pane) switchSubtab(group, loc.pane);  // remembered, so the tab's loader keeps it
+    if (currentTab !== loc.tab || document.getElementById('tab-' + loc.tab).hidden) switchTab(loc.tab);
+    navCurrent = loc;
+  } finally {
+    navRestoring = false;
+  }
+  renderBackButton();
+}
+function resetNavHistory() { navStack.length = 0; navCurrent = null; renderBackButton(); }
+// The Back button goes through browser history so it and the phone's back gesture stay in
+// step; popstate does the navigating. With a pop-up open, Back closes the pop-up first.
+document.getElementById('nav-back').addEventListener('click', () => {
+  if (!navStack.length) return;
+  try { history.back(); } catch { navBack(); }
+});
+window.addEventListener('popstate', () => {
+  if (!currentUser) return;
+  if (document.getElementById('modal-overlay').classList.contains('open')) {
+    closeModal();
+    try { history.pushState({ nav: navStack.length }, ''); } catch { /* sandboxed */ }  // keep this page's entry
+    return;
+  }
+  navBack();
+});
+
 function switchTab(tab) {
+  // A tab that isn't in the config (or was hidden there) can't be opened, e.g. from a notification.
+  if (!TAB_META[tab]) { tab = firstAllowedTab(); if (!tab) return; }
+  const group = tabGroup(tab);
+  navVisit(tab, group ? currentSubtab(group) : null);
   currentTab = tab;
   document.querySelectorAll('.nav-item[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.nav-item.has-children').forEach(b => setNavGroupOpen(b.dataset.tab, b.dataset.tab === tab));
-  Object.keys(TAB_META).forEach(t => { document.getElementById('tab-' + t).hidden = t !== tab; });
+  document.querySelectorAll('main.content > section[id^="tab-"]').forEach(sec => { sec.hidden = sec.id !== 'tab-' + tab; });
   document.getElementById('page-title').textContent = TAB_META[tab].title;
   document.getElementById('page-sub').textContent = TAB_META[tab].sub;
   document.getElementById('app-shell').classList.remove('sb-open');
   storageSet('last-tab', tab);
   if (TAB_LOADERS[tab]) TAB_LOADERS[tab]();
 }
-document.querySelectorAll('.nav-item[data-tab]').forEach(btn => btn.addEventListener('click', () => {
-  // Re-clicking an open group's tab just folds/unfolds it, without reloading the tab.
-  if (btn.classList.contains('has-children') && currentTab === btn.dataset.tab && !document.getElementById('tab-' + currentTab).hidden) {
-    setNavGroupOpen(btn.dataset.tab, !btn.classList.contains('open'));
-    return;
-  }
-  switchTab(btn.dataset.tab);
-}));
 // Highlight one link in a tab's group (for filter/scroll links; sub-tab links follow switchSubtab).
 function setNavSubActive(tab, attr, value) {
   document.querySelectorAll(`.nav-sub[data-sub-tab="${tab}"]`).forEach(b => b.classList.toggle('active', b.getAttribute(attr) === value));
@@ -284,7 +482,20 @@ function setNavSubCount(tab, attr, value, count) {
   const badge = document.querySelector(`.nav-sub[data-sub-tab="${tab}"][${attr}="${value}"] .count`);
   if (badge) { badge.textContent = count; badge.hidden = !count; }
 }
-document.querySelectorAll('.nav-sub[data-sub-tab]').forEach(btn => btn.addEventListener('click', () => {
+// One listener for the whole (generated) sidebar.
+document.getElementById('sb-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-item, .nav-sub');
+  if (!btn) return;
+  if (btn.dataset.link) { openNavLink(btn.dataset.link); return; }
+  if (btn.classList.contains('nav-item')) {
+    // Re-clicking an open group's tab just folds/unfolds it, without reloading the tab.
+    if (btn.classList.contains('has-children') && currentTab === btn.dataset.tab && !document.getElementById('tab-' + currentTab).hidden) {
+      setNavGroupOpen(btn.dataset.tab, !btn.classList.contains('open'));
+      return;
+    }
+    switchTab(btn.dataset.tab);
+    return;
+  }
   const tab = btn.dataset.subTab, d = btn.dataset;
   const opening = currentTab !== tab || document.getElementById('tab-' + tab).hidden;
   if (d.pane) {
@@ -306,28 +517,23 @@ document.querySelectorAll('.nav-sub[data-sub-tab]').forEach(btn => btn.addEventL
     }
   }
   document.getElementById('app-shell').classList.remove('sb-open');
-}));
+});
 
 // Sub-tabs: <div class="subtabs" data-group="wh"><button data-pane="wh-items">...</button></div>
 // and panes <div class="subpane" data-pane="wh-items">. The chosen pane is remembered per group.
+// The bars' buttons come from the config, so a sub-tab hidden there has no button -- and
+// asking for it (e.g. after creating a bill) falls back to the remembered/first one.
 const SUBTAB_LOADERS = {};
-// Page heading for sub-tabs that have their own entry in the sidebar.
-const PANE_META = {
-  'wh-items': { title: 'Warehouse · Items', sub: 'Stock levels, SKUs and critical levels' },
-  'wh-bills': { title: 'Warehouse · Purchase bills', sub: 'Purchase orders, approvals and deliveries' },
-  'wh-batches': { title: 'Warehouse · Batches & barcodes', sub: 'Received batches, expiry dates and labels' },
-  'wh-orders': { title: 'Warehouse · Work orders', sub: 'Stock issued to employees and receipt confirmation' },
-  'ha-buildings': { title: 'Hotel architecture · Buildings', sub: 'Buildings, their floors and rooms' },
-  'ha-floors': { title: 'Hotel architecture · Floors', sub: 'Every floor, by building' },
-  'ha-rooms': { title: 'Hotel architecture · Rooms', sub: 'Every room and its door number' },
-  'hr-employees': { title: 'HR · Employees', sub: 'Staff records, photos and live presence' },
-  'hr-attendance': { title: 'HR · Attendance', sub: 'Clock in/out and worked vs expected hours' },
-  'hr-accounts': { title: 'HR · Users', sub: 'Login accounts, their roles and recovery requests' },
-  'hr-roles': { title: 'HR · Roles', sub: 'What each role can open, and whether it can sign in' },
-  'hr-policy': { title: 'HR · Policy', sub: 'Password rules, sign-in protection, sessions and attendance' },
-};
 function switchSubtab(group, pane) {
-  document.querySelectorAll(`.subtabs[data-group="${group}"] button`).forEach(b => {
+  if (!document.querySelector(`.subtabs[data-group="${group}"] button[data-pane="${pane}"]`)) {
+    pane = currentSubtab(group);
+    if (!pane) return;
+  }
+  // Only a change on the tab being shown is a page visit; a sidebar link into another tab is
+  // recorded by the switchTab that follows (it reads this remembered pane).
+  const paneTab = groupTab(group);
+  if (paneTab === currentTab && !document.getElementById('tab-' + paneTab).hidden) navVisit(paneTab, pane);
+  document.querySelectorAll(`.subtabs[data-group="${group}"] button[data-pane]`).forEach(b => {
     const active = b.dataset.pane === pane;
     b.classList.toggle('active', active);
     b.setAttribute('aria-selected', active);
@@ -347,15 +553,17 @@ function switchSubtab(group, pane) {
 }
 function currentSubtab(group) {
   const saved = storageGet('subtab-' + group);
-  const first = document.querySelector(`.subtabs[data-group="${group}"] button`);
-  return saved && document.querySelector(`.subtabs[data-group="${group}"] button[data-pane="${saved}"]`) ? saved : first.dataset.pane;
+  const first = document.querySelector(`.subtabs[data-group="${group}"] button[data-pane]`);
+  if (saved && document.querySelector(`.subtabs[data-group="${group}"] button[data-pane="${saved}"]`)) return saved;
+  return first ? first.dataset.pane : null;
 }
-document.querySelectorAll('.subtabs').forEach(bar => {
-  bar.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-pane]');
-    if (btn) switchSubtab(bar.dataset.group, btn.dataset.pane);
-  });
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.subtabs button');
+  if (!btn) return;
+  if (btn.dataset.link) openNavLink(btn.dataset.link);
+  else if (btn.dataset.pane) switchSubtab(btn.closest('.subtabs').dataset.group, btn.dataset.pane);
 });
+
 function setSubtabCount(pane, count, alert = false) {
   document.querySelectorAll(`.subtabs button[data-pane="${pane}"], .nav-sub[data-pane="${pane}"]`).forEach(btn => {
     let badge = btn.querySelector('.count');
@@ -695,17 +903,20 @@ function enterApp(user, { welcome = false } = {}) {
   document.getElementById('app-shell').hidden = false;
   renderUserChip(user);
   document.getElementById('menu-user-email').textContent = user.email || 'No recovery email on file';
-  // Every sidebar tab carries its permission (data-permission); tabs without one (Dashboard)
-  // are for everyone. Grants are managed in HR -> Accounts, which lists these same tabs.
-  document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
-    btn.hidden = !!btn.dataset.permission && !hasPermission(btn.dataset.permission);
+  // Every sidebar tab carries its permission (data-permission, from config/ui.json); tabs
+  // without one (Dashboard) are for everyone. Grants are managed in HR -> Users / Roles, which
+  // list these same tabs.
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.hidden = !!btn.dataset.permission && !hasPermission(btn.dataset.permission);  // CSS hides its group too
   });
   applySidebarState();
   const saved = storageGet('last-tab');
-  const allowed = saved && !document.getElementById('nav-' + saved)?.hidden ? saved : 'dashboard';
+  const savedBtn = saved && document.getElementById('nav-' + saved);
+  const allowed = savedBtn && !savedBtn.hidden && TAB_META[saved] ? saved : firstAllowedTab();
   loadBranding();
-  switchTab(allowed);
+  if (allowed) switchTab(allowed);
   startPolling();
+  reportUiConfigWarnings();
 }
 
 // Header chip + menu: the linked employee's name and photo when there is one, else the username.
@@ -735,6 +946,7 @@ async function refreshCurrentUser() {
 // reason: optional message shown on the sign-in card (e.g. signed out for inactivity).
 function exitApp(reason) {
   currentUser = null;
+  resetNavHistory();
   stopPolling();
   closeModal();
   if (typeof resetDashboardState === 'function') resetDashboardState();
@@ -944,6 +1156,11 @@ function stopPolling() { stopPresence(); if (pollTimer) clearInterval(pollTimer)
 // ---- Boot ----
 async function boot() {
   const params = new URLSearchParams(location.search);
+  // The navigation has to exist before anything can switch tabs. If the config can't be
+  // fetched at all, the server-side defaults are unreachable too -- show a plain message.
+  const config = await loadUiConfig();
+  if (!config) { document.body.innerHTML = '<p style="padding:2rem;font-family:sans-serif">Could not load the app configuration. Check that the server is running and reload the page.</p>'; return; }
+  buildNavigation(config);
   renderGreeting();
   const remembered = storageGet('remember-username');
   document.getElementById('login-username').value = remembered || '';

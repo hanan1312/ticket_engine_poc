@@ -298,7 +298,7 @@ function roleCards(selected) {
 function roleSummary(r) {
   if (r.is_admin) return 'Full access to everything.';
   const labels = r.permissions.map(k => (hr.permissions.find(p => p.key === k) || { label: k }).label);
-  return labels.length ? `Dashboard, ${labels.join(', ')}` : 'Dashboard and tickets only';
+  return labels.length ? `${tabLabel('dashboard')}, ${labels.join(', ')}` : `${tabLabel('dashboard')} and tickets only`;
 }
 
 function showTempPassword({ username, temp_password, emailed }, email) {
@@ -364,7 +364,7 @@ function openCreateAccountModal(presetEmployeeId, fromEmployee = false) {
 document.getElementById('hr-new-account').addEventListener('click', () => openCreateAccountModal());
 
 // The sidebar tabs as permission switches (from the server's registry, which is read from the
-// sidebar itself). Dashboard has no permission -- everyone gets it -- so it's shown locked on.
+// sidebar, i.e. config/ui.json). Dashboard has no permission -- everyone gets it -- so it's shown locked on.
 function permissionSwitches(granted, editable = isAdmin()) {
   const navIcon = key => {
     const svg = document.querySelector(`.nav-item[data-permission="${key}"] svg`);
@@ -372,9 +372,9 @@ function permissionSwitches(granted, editable = isAdmin()) {
   };
   const dashIcon = document.querySelector('.nav-item[data-tab="dashboard"] svg');
   return `<div class="perm-grid">
-    <label class="perm-row locked" title="Everyone can open the Dashboard">
+    <label class="perm-row locked" title="Everyone can open the ${esc(tabLabel('dashboard'))} tab">
       <span class="perm-icon">${dashIcon ? dashIcon.outerHTML : ''}</span>
-      <span class="perm-text"><b>Dashboard</b><small>Always on for everyone</small></span>
+      <span class="perm-text"><b>${esc(tabLabel('dashboard'))}</b><small>Always on for everyone</small></span>
       <span class="switch-row"><input type="checkbox" checked disabled><span class="switch"></span></span></label>
     ${hr.permissions.map(p => `<label class="perm-row">
       <span class="perm-icon">${navIcon(p.key)}</span>
@@ -495,7 +495,7 @@ function renderRoles() {
     const members = hr.users.filter(u => u.access_role === r.key && u.is_active);
     const faces = members.slice(0, 4).map(u => `<span class="avatar xs" title="${esc(u.employee_name || u.username)}">${esc(initials(u.employee_name || u.username))}</span>`).join('');
     const perms = r.is_admin ? '<span class="perm-chip all">Full access · approvals · accounts</span>'
-      : [{ key: '', label: 'Dashboard' }, ...hr.permissions.filter(p => r.permissions.includes(p.key))]
+      : [{ key: '', label: tabLabel('dashboard') }, ...hr.permissions.filter(p => r.permissions.includes(p.key))]
         .map(p => `<span class="perm-chip" title="${esc(p.label)}">${navIconFor(p.key)}${esc(p.label)}</span>`).join('');
     return `
       <button class="role-tile c-${esc(r.color)} ${r.can_login ? '' : 'no-login'}" onclick="openRoleModal('${esc(r.key)}')">
@@ -514,7 +514,7 @@ function renderRoles() {
   const newBtn = document.getElementById('hr-new-role');
   if (newBtn) newBtn.addEventListener('click', () => openRoleModal(null));
 
-  const cols = [{ key: '', label: 'Dashboard' }, ...hr.permissions];
+  const cols = [{ key: '', label: tabLabel('dashboard') }, ...hr.permissions];
   document.getElementById('hr-role-matrix').innerHTML = `
     <thead><tr><th>Role</th>${cols.map(c => `<th class="mx-col"><span class="mx-ic">${navIconFor(c.key)}</span>${esc(c.label)}</th>`).join('')}<th class="mx-col">Sign-in</th><th class="num">Users</th></tr></thead>
     <tbody>${hr.roles.map(r => `

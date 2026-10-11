@@ -7,7 +7,6 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-getStatus('lab'); 
 
 app.post('/api/whatsapp/send', async (req, res) => {
     // Destructure pdfUrl just in case you use it later
@@ -67,6 +66,17 @@ app.get('/api/whatsapp/status', (req, res) => {
 });
 
 const PORT = process.env.NODE_PORT || 5050;
-app.listen(PORT, () => {
+// Express 5 hands listen errors to this callback instead of throwing. Without this check a second
+// copy of the service would print "running" while another copy keeps answering on the port --
+// it would show a QR code in its own terminal that the app (talking to the other copy) never sees.
+app.listen(PORT, (err) => {
+    if (err) {
+        console.error(err.code === 'EADDRINUSE'
+            ? `❌ Port ${PORT} is already in use -- another copy of this service is running. Stop it first ` +
+              `(sudo systemctl stop ticket-engine-whatsapp, or: sudo fuser -k ${PORT}/tcp), then start this one again.`
+            : `❌ Could not listen on port ${PORT}: ${err.message}`);
+        process.exit(1);
+    }
     console.log(`Node Server: WhatsApp Microservice running on port ${PORT}`);
+    getStatus('lab');  // start the WhatsApp client only once the port is ours
 });

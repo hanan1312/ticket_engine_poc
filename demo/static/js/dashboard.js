@@ -62,7 +62,9 @@ document.getElementById('create-ticket-btn').addEventListener('click', async () 
 
 // ---- Ticket workflow ----
 // Mirrors ticket_engine/models.py ALLOWED_TRANSITIONS (role=null means anyone logged in),
-// so the UI only offers buttons the server will actually accept for this user.
+// so the UI only offers buttons the server will actually accept for this user. Assigning and
+// reassigning go through the ticket's Assignment panel (PUT /tickets/<id>/assignee) instead --
+// the 'assigned' entries here only open the ticket from the list.
 const ACTIONS = {
   open: [['assigned', 'Assign', 'btn-primary', 'admin'], ['rejected', 'Reject', 'btn-danger-outline', 'admin']],
   assigned: [['in_progress', 'Start work', 'btn-primary', null], ['rejected', 'Reject', 'btn-danger-outline', 'admin']],
@@ -119,16 +121,42 @@ async function loadTickets() {
     <div class="ticket-row status-${t.status}" onclick="openTicketModal(${t.id})" title="Click for full details & history">
       <div class="ticket-main">
         <div class="ticket-title">#${t.id} ${esc(t.title)} ${t.priority !== 'normal' ? prioChip(t.priority) : ''}</div>
-        <div class="ticket-sub">${esc(t.asset_name)}${t.assigned_to ? ' · assigned to ' + esc(t.assigned_to) : ''}</div>
+        <div class="ticket-sub">${esc(t.asset_name)}${t.assigned_to ? ' · assigned to ' + esc(t.assigned_to_name || t.assigned_to) : ''}</div>
       </div>
+      ${ticketFlags(t)}
       <span class="badge badge-${t.status}">${STATUS_LABEL[t.status] || t.status}</span>
       <div class="ticket-actions" onclick="event.stopPropagation()">
-        ${actionsFor(t.status).map(([s, label, cls]) =>
-          `<button class="${cls} btn-sm" onclick="quickAction(${t.id}, '${s}')">${label}</button>`).join('')}
+        ${needsAssignee(t)
+          ? (isAdmin() ? `<button class="btn-primary btn-sm" onclick="openTicketModal(${t.id})">Assign</button>` : '')
+          : actionsFor(t.status).map(([s, label, cls]) =>
+            `<button class="${cls} btn-sm" onclick="quickAction(${t.id}, '${s}')">${label}</button>`).join('')}
       </div>
     </div>
   `).join('') || EMPTY_TICKETS;
   return tickets;
+}
+
+// Small chips on ticket rows: an active ticket nobody is on, and a pending referral request.
+function needsAssignee(t) { return ['assigned', 'in_progress'].includes(t.status) && !t.assigned_to_id; }
+function ticketFlags(t) {
+  return (needsAssignee(t) ? '<span class="flag-chip warn" title="Marked assigned, but nobody is named">No assignee</span>' : '')
+    + (t.pending_referral ? `<span class="flag-chip ref" title="${esc(t.pending_referral.requested_by.name)} asked to hand this over">Referral requested</span>` : '');
+}
+
+// Admins: every pending referral request, with a shortcut into the ticket to decide.
+async function loadReferrals() {
+  const card = document.getElementById('referrals-card');
+  if (!isAdmin()) { card.hidden = true; return; }
+  const rows = await api('/api/referrals?status=pending', { quiet: true }) || [];
+  card.hidden = !rows.length;
+  document.getElementById('referrals-list').innerHTML = rows.map(r => `
+    <div class="list-item" style="border-left-color:var(--warning)" onclick="openTicketModal(${r.ticket_id})">
+      <div class="li-main">
+        <div class="li-title">#${r.ticket.id} ${esc(r.ticket.title)} ${prioChip(r.ticket.priority)}</div>
+        <div class="li-sub"><b>${esc(r.requested_by.name)}</b> → ${r.to_user ? `<b>${esc(r.to_user.name)}</b>` : '<i>admin to choose</i>'} · ${esc(r.reason)} · ${fmtAgo(r.created_at)}</div>
+      </div>
+      <span class="badge badge-in_progress">Review</span>${ARROW}
+    </div>`).join('');
 }
 
 async function loadStats(tickets) {
@@ -146,6 +174,7 @@ async function refreshAll() {
   lastTickets = tickets || [];
   await loadStats(lastTickets);
   renderStatPanel();
+  loadReferrals();
 }
 
 // ---- Expandable stat cards ----
@@ -185,8 +214,9 @@ function ticketListRow(t) {
   return `<div class="list-item" style="border-left-color:var(--${{ open: 'slate', assigned: 'info', in_progress: 'warning', resolved: 'success', rejected: 'danger' }[t.status]})" onclick="openTicketModal(${t.id})">
     <div class="li-main">
       <div class="li-title">#${t.id} ${esc(t.title)} ${prioChip(t.priority)}</div>
-      <div class="li-sub">${esc(t.asset_name)}${t.asset_location ? ' (' + esc(t.asset_location) + ')' : ''} · ${when}${t.assigned_to ? ' · ' + esc(t.assigned_to) : ''}</div>
+      <div class="li-sub">${esc(t.asset_name)}${t.asset_location ? ' (' + esc(t.asset_location) + ')' : ''} · ${when}${t.assigned_to ? ' · ' + esc(t.assigned_to_name || t.assigned_to) : ''}</div>
     </div>
+    ${ticketFlags(t)}
     <span class="badge badge-${t.status}">${STATUS_LABEL[t.status]}</span>
     ${ARROW}</div>`;
 }
@@ -272,16 +302,29 @@ const TL_ICONS = {
   rejected: '<path d="M18 6 6 18M6 6l12 12"/>',
   comment: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   notification: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  assignment: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+  referral_requested: '<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+  referral_approved: '<path d="M20 6 9 17l-5-5"/>',
+  referral_rejected: '<path d="M18 6 6 18M6 6l12 12"/>',
+  referral_cancelled: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+};
+const REFERRAL_TEXT = {
+  assignment: 'changed the assignment',
+  referral_requested: 'asked to refer the ticket',
+  referral_approved: 'approved the referral',
+  referral_rejected: 'declined the referral',
+  referral_cancelled: 'closed the referral request',
 };
 
 function renderTimeline(events) {
   return `<ul class="timeline">${events.map((e, i) => {
     const kind = e.event_type === 'status_changed' ? e.to_status : e.event_type;
-    const who = e.actor ? `<b>${esc(e.actor)}</b>` : 'System';
+    const who = e.actor ? `<b>${esc(e.actor_name || e.actor)}</b>` : 'System';
     let text;
     if (e.event_type === 'created') text = `${who} opened the ticket`;
     else if (e.event_type === 'status_changed') text = `${who} moved it <span class="badge badge-${e.from_status}">${STATUS_LABEL[e.from_status]}</span> → <span class="badge badge-${e.to_status}">${STATUS_LABEL[e.to_status]}</span>${e.overrode_warning ? '<span class="override-chip">warning overridden</span>' : ''}`;
     else if (e.event_type === 'comment') text = `${who} commented`;
+    else if (REFERRAL_TEXT[e.event_type]) text = `${who} ${REFERRAL_TEXT[e.event_type]}`;
     else if (e.event_type === 'notification') {
       const sent = /^WhatsApp sent/.test(e.note || '');
       const skipped = /skipped|no phone/.test(e.note || '');
@@ -302,38 +345,108 @@ function renderTimeline(events) {
   }).join('')}</ul>`;
 }
 
+function personOptions(users, selectedId, { exclude = [], blank = '' } = {}) {
+  return (blank ? `<option value="">${esc(blank)}</option>` : '') + users.filter(u => !exclude.includes(u.id)).map(u =>
+    `<option value="${u.id}" ${u.id === selectedId ? 'selected' : ''}>${esc(u.name)}${u.name !== u.username ? ` (@${esc(u.username)})` : ''}${u.role === 'admin' ? ' · admin' : ''}</option>`).join('');
+}
+
+// Assignment panel (admins): assign / reassign an active ticket at any time.
+function assignmentSection(ticket) {
+  const active = ['open', 'assigned', 'in_progress'].includes(ticket.status);
+  if (!active || !isAdmin()) return '';
+  const missing = needsAssignee(ticket);
+  return `
+    <div class="modal-section">
+      <h3>Assignment</h3>
+      <div class="action-box ${missing ? 'attention' : ''}">
+        ${missing ? `<div class="hint-banner warn" style="margin-top:0">${icon('alert', 15)}<span>This ticket is marked <b>assigned</b> but nobody is named — choose who does it.</span></div>` : ''}
+        <div class="field-row wrap">
+          <span class="field-label" style="flex:0 0 auto; margin:0;">${ticket.assigned_to_id ? 'Reassign to' : 'Assign to'}</span>
+          <select id="md-assignee" style="flex:1; min-width:180px;">${personOptions(assigneesCache, ticket.assigned_to_id, { blank: ticket.assigned_to_id ? '' : '— choose a person —' })}</select>
+        </div>
+        <input id="md-assign-note" type="text" placeholder="Note for them (optional) — e.g. 'guest checks in at 3pm'" style="width:100%; margin-top:.6rem;">
+        <div class="action-buttons"><button class="btn-primary btn-sm" id="md-assign-btn">${icon('user', 14)} ${ticket.assigned_to_id ? 'Reassign' : 'Assign'}</button></div>
+      </div>
+    </div>`;
+}
+
+// Referral panel: a pending request (admin decides / requester withdraws), or the assignee's
+// "ask to refer" form, plus past requests.
+function referralSection(ticket, referrals) {
+  const me = currentUser && currentUser.id;
+  const pending = ticket.pending_referral;
+  const past = referrals.filter(r => r.status !== 'pending');
+  const active = ['assigned', 'in_progress'].includes(ticket.status);
+  let body = '';
+  if (pending) {
+    const mine = pending.requested_by.id === me;
+    body = `
+      <div class="referral-card">
+        <div class="rc-head">${icon('refresh', 15)}<b>${esc(pending.requested_by.name)}</b> asked to hand this ticket to
+          ${pending.to_user ? `<b>${esc(pending.to_user.name)}</b>` : '<i>someone an admin chooses</i>'}<span class="muted"> · ${fmtAgo(pending.created_at)}</span></div>
+        <div class="desc-box">${esc(pending.reason)}</div>
+        ${isAdmin() ? `
+          <div class="field-row wrap" style="margin-top:.7rem">
+            <span class="field-label" style="flex:0 0 auto; margin:0;">Give it to</span>
+            <select id="md-ref-assignee" style="flex:1; min-width:180px;">${personOptions(assigneesCache, pending.to_user ? pending.to_user.id : null, { exclude: [pending.requested_by.id], blank: pending.to_user ? '' : '— choose a person —' })}</select>
+          </div>
+          <input id="md-ref-note" type="text" placeholder="Comment for ${esc(pending.requested_by.name)} (optional)" style="width:100%; margin-top:.6rem;">
+          <div class="action-buttons">
+            <button class="btn-primary btn-sm" id="md-ref-approve">${icon('check', 14)} Approve &amp; assign</button>
+            <button class="btn-danger-outline btn-sm" id="md-ref-reject">${icon('x', 14)} Decline — keep with ${esc(pending.requested_by.name)}</button>
+          </div>` : mine ? `
+          <p class="muted" style="margin:.6rem 0 0">Waiting for an admin. Keep working on it until they decide.</p>
+          <div class="action-buttons"><button class="btn-outline btn-sm" id="md-ref-cancel">Withdraw request</button></div>` : '<p class="muted" style="margin:.6rem 0 0">Waiting for an admin to decide.</p>'}
+      </div>`;
+  } else if (active && ticket.assigned_to_id === me) {
+    body = `
+      <details class="referral-ask" id="md-ref-ask">
+        <summary>${icon('refresh', 15)} Can't do this one? <b>Ask to refer it to someone else</b></summary>
+        <div class="form-grid one" style="margin-top:.8rem">
+          <label class="field"><span>Suggest who should take it</span>
+            <select id="md-ref-to">${personOptions(assigneesCache, null, { exclude: [me], blank: 'Let an admin choose' })}</select></label>
+          <label class="field"><span>Why? <em>(required — admins see this)</em></span>
+            <textarea id="md-ref-reason" rows="2" placeholder="e.g. Needs a licensed electrician / I'm off tomorrow"></textarea></label>
+        </div>
+        <div class="action-buttons"><button class="btn-primary btn-sm" id="md-ref-send">Send to admins for approval</button></div>
+      </details>`;
+  }
+  const history = past.length ? `<p class="group-label">Earlier requests</p>${past.map(r => `
+    <div class="history-row"><span>${esc(r.requested_by.name)} → ${r.to_user ? esc(r.to_user.name) : 'admin\'s choice'}</span>
+      <span class="muted"><span class="badge badge-${{ approved: 'resolved', rejected: 'rejected', cancelled: 'open' }[r.status]}">${esc(r.status)}</span>
+      ${r.assigned_to ? `to ${esc(r.assigned_to.name)}` : ''} ${r.decided_by ? `by ${esc(r.decided_by.name)}` : ''} ${fmtAgo(r.decided_at)}${r.decision_note ? ` — “${esc(r.decision_note)}”` : ''}</span></div>`).join('')}` : '';
+  if (!body && !history) return '';
+  return `<div class="modal-section"><h3>Referral</h3>${body}${history}</div>`;
+}
+
 async function openTicketModal(ticketId) {
-  const [ticket, events] = await Promise.all([api(`/api/tickets/${ticketId}`), api(`/api/tickets/${ticketId}/events`)]);
+  const [ticket, events, referrals] = await Promise.all([
+    api(`/api/tickets/${ticketId}`), api(`/api/tickets/${ticketId}/events`), api(`/api/tickets/${ticketId}/referrals`, { quiet: true })]);
   if (!ticket || !events) return;
-  const actions = actionsFor(ticket.status);
-  const needsAssignee = actions.some(([s]) => s === 'assigned');
-  if (needsAssignee && !assigneesCache) assigneesCache = await api('/api/assignees') || [];
+  const actions = actionsFor(ticket.status).filter(([s]) => s !== 'assigned');  // assignment has its own panel
+  if (!assigneesCache) assigneesCache = await api('/api/assignees') || [];
   pushHistory('ticket', ticket.id);
 
   document.getElementById('modal-title').innerHTML = `#${ticket.id} ${esc(ticket.title)}`;
   document.getElementById('modal-sub').innerHTML =
-    `<span class="badge badge-${ticket.status}">${STATUS_LABEL[ticket.status]}</span> ${prioChip(ticket.priority)} · opened by ${esc(ticket.created_by || '—')} ${fmtAgo(ticket.created_at)}`;
+    `<span class="badge badge-${ticket.status}">${STATUS_LABEL[ticket.status]}</span> ${prioChip(ticket.priority)} ${ticketFlags(ticket)} · opened by ${esc(ticket.created_by || '—')} ${fmtAgo(ticket.created_at)}`;
 
-  const assigneeSelect = needsAssignee ? `
-    <select id="md-assignee" style="flex:1; min-width:160px;">
-      ${assigneesCache.map(u => `<option value="${u.id}" ${u.id === ticket.assigned_to_id ? 'selected' : ''}>${esc(u.username)} (${esc(u.role)})</option>`).join('')}
-    </select>` : '';
-
-  const actionBox = actions.length ? `
+  // "Start work" on a ticket nobody is assigned to would be meaningless -- assign first.
+  const blocked = needsAssignee(ticket);
+  const actionBox = actions.length && !(blocked && !isAdmin()) ? `
     <div class="modal-section">
       <h3>Next step</h3>
       <div class="action-box">
-        ${needsAssignee ? `<div class="field-row" style="margin-bottom:0.6rem;"><span class="field-label" style="flex:0 0 auto; margin:0;">Assign to</span>${assigneeSelect}</div>` : ''}
         <input id="md-note" type="text" placeholder="Note for this step (optional) — e.g. 'replaced compressor fuse'" style="width:100%;">
         <div class="action-buttons">
-          ${actions.map(([s, label, cls]) => `<button class="${cls} btn-sm" data-to="${s}">${label}</button>`).join('')}
+          ${actions.map(([s, label, cls]) => `<button class="${cls} btn-sm" data-to="${s}" ${blocked && s !== 'rejected' ? 'disabled title="Assign someone first"' : ''}>${label}</button>`).join('')}
         </div>
       </div>
-    </div>` : `
+    </div>` : ['resolved', 'rejected'].includes(ticket.status) ? `
     <div class="modal-section"><div class="hint-banner" style="margin:0;">
-      <span>${ticket.status === 'resolved' || ticket.status === 'rejected'
-        ? `This ticket is <b>${STATUS_LABEL[ticket.status].toLowerCase()}</b> — its lifecycle is complete.`
-        : 'No actions available for your role at this stage.'}</span></div></div>`;
+      <span>This ticket is <b>${STATUS_LABEL[ticket.status].toLowerCase()}</b> — its lifecycle is complete.</span></div></div>` : isAdmin() ? '' : `
+    <div class="modal-section"><div class="hint-banner" style="margin:0;">
+      <span>${blocked ? 'Nobody is assigned to this ticket yet — an admin will assign it.' : 'No actions available for your role at this stage.'}</span></div></div>`;
 
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-section">
@@ -347,12 +460,14 @@ async function openTicketModal(ticketId) {
         <div><div class="meta-k">Asset</div><div class="meta-v"><button class="link-btn" id="md-asset-link">${esc(ticket.asset_name)}</button></div></div>
         <div><div class="meta-k">Location</div><div class="meta-v">${esc(ticket.asset_location || '—')}</div></div>
         <div><div class="meta-k">Barcode</div><div class="meta-v mono">${esc(ticket.asset_barcode)}</div></div>
-        <div><div class="meta-k">Assigned to</div><div class="meta-v">${esc(ticket.assigned_to || 'Unassigned')}</div></div>
+        <div><div class="meta-k">Assigned to</div><div class="meta-v">${ticket.assigned_to ? esc(ticket.assigned_to_name || ticket.assigned_to) : `<span class="${blocked ? 'danger-text' : 'muted'}">Unassigned</span>`}</div></div>
         <div><div class="meta-k">Created</div><div class="meta-v">${fmtTs(ticket.created_at)}</div></div>
         <div><div class="meta-k">Resolved</div><div class="meta-v">${ticket.resolved_at ? fmtTs(ticket.resolved_at) : '—'}</div></div>
       </div>
       ${ticket.description ? `<div class="desc-box">${esc(ticket.description)}</div>` : ''}
     </div>
+    ${assignmentSection(ticket)}
+    ${referralSection(ticket, referrals || [])}
     ${actionBox}
     <div class="modal-section">
       <h3>History (${events.length} event${events.length === 1 ? '' : 's'})</h3>
@@ -363,28 +478,64 @@ async function openTicketModal(ticketId) {
       </div>
     </div>`;
 
-  document.getElementById('md-asset-link').addEventListener('click', () => openAssetModal(ticket.asset_id));
-  document.querySelectorAll('#modal-body .action-buttons button').forEach(btn => {
+  const el = id => document.getElementById(id);
+  const reopen = async () => { await refreshAll(); openTicketModal(ticket.id); };
+  el('md-asset-link').addEventListener('click', () => openAssetModal(ticket.asset_id));
+  document.querySelectorAll('#modal-body .action-buttons button[data-to]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const to = btn.dataset.to;
       const extra = {};
-      const note = document.getElementById('md-note').value.trim();
+      const note = el('md-note').value.trim();
       if (note) extra.note = note;
-      if (to === 'assigned') extra.assigned_to_id = parseInt(document.getElementById('md-assignee').value, 10);
       if (to === 'rejected' && !confirm(`Reject ticket #${ticket.id}? This ends its lifecycle.`)) return;
       btn.disabled = true;
       const updated = await transition(ticket.id, to, extra);
       if (updated) openTicketModal(ticket.id); else btn.disabled = false;
     });
   });
-  const commentInput = document.getElementById('md-comment');
+  if (el('md-assign-btn')) el('md-assign-btn').addEventListener('click', async e => {
+    const id = parseInt(el('md-assignee').value, 10);
+    if (!id) return toast('Choose who to assign the ticket to.', 'error');
+    e.currentTarget.disabled = true;
+    const updated = await api(`/api/tickets/${ticket.id}/assignee`, { method: 'PUT', body: JSON.stringify({ assigned_to_id: id, note: el('md-assign-note').value.trim() }) });
+    if (updated) { toast(`Ticket #${ticket.id} assigned to ${updated.assigned_to_name}.`, 'success'); log(`ticket #${ticket.id} assigned to ${updated.assigned_to}`); reopen(); }
+    else e.currentTarget.disabled = false;
+  });
+  if (el('md-ref-send')) el('md-ref-send').addEventListener('click', async e => {
+    const reason = el('md-ref-reason').value.trim();
+    if (!reason) return toast('Say why the ticket should go to someone else.', 'error');
+    e.currentTarget.disabled = true;
+    const r = await api(`/api/tickets/${ticket.id}/referrals`, { method: 'POST', body: JSON.stringify({ reason, to_user_id: parseInt(el('md-ref-to').value, 10) || null }) });
+    if (r) { toast('Referral request sent to the admins.', 'success'); log(`ticket #${ticket.id}: referral requested`); reopen(); }
+    else e.currentTarget.disabled = false;
+  });
+  const decide = async (decision, btn) => {
+    const payload = { decision, note: el('md-ref-note').value.trim() };
+    if (decision === 'approve') {
+      payload.assign_to_id = parseInt(el('md-ref-assignee').value, 10) || null;
+      if (!payload.assign_to_id) return toast('Choose who gets the ticket.', 'error');
+    }
+    btn.disabled = true;
+    const res = await api(`/api/referrals/${ticket.pending_referral.id}/decide`, { method: 'POST', body: JSON.stringify(payload) });
+    if (res) {
+      toast(decision === 'approve' ? `Approved — ticket #${ticket.id} now assigned to ${res.ticket.assigned_to_name}.` : 'Referral declined.', 'success');
+      log(`ticket #${ticket.id}: referral ${decision}d`); reopen();
+    } else btn.disabled = false;
+  };
+  if (el('md-ref-approve')) el('md-ref-approve').addEventListener('click', e => decide('approve', e.currentTarget));
+  if (el('md-ref-reject')) el('md-ref-reject').addEventListener('click', e => decide('reject', e.currentTarget));
+  if (el('md-ref-cancel')) el('md-ref-cancel').addEventListener('click', async () => {
+    if (!confirm('Withdraw your referral request? The ticket stays with you.')) return;
+    if (await api(`/api/referrals/${ticket.pending_referral.id}/cancel`, { method: 'POST' })) { toast('Request withdrawn.', 'success'); reopen(); }
+  });
+  const commentInput = el('md-comment');
   const postComment = async () => {
     const note = commentInput.value.trim();
     if (!note) return;
     const ok = await api(`/api/tickets/${ticket.id}/comments`, { method: 'POST', body: JSON.stringify({ note }) });
     if (ok) { log(`ticket #${ticket.id}: comment added`); openTicketModal(ticket.id); }
   };
-  document.getElementById('md-comment-btn').addEventListener('click', postComment);
+  el('md-comment-btn').addEventListener('click', postComment);
   commentInput.addEventListener('keydown', e => { if (e.key === 'Enter') postComment(); });
   showModal();
 }

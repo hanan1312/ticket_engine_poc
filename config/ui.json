@@ -1,0 +1,117 @@
+{
+  "_readme": "Controls the left panel, tabs, sub-tabs and their names. Edit, save, reload the page -- no restart needed. Full reference: README.md, 'Customizing tabs and names (config/ui.json)'.",
+
+  "app": {
+    "sidebar_subtitle": "Operations suite",
+    "sidebar_section": "Workspace",
+    "footer": "Ticket Engine POC",
+    "default_tab": "dashboard"
+  },
+
+  "login": {
+    "tagline": "Hotel operations suite",
+    "heading": "Sign in to your workspace",
+    "lead": "Assets, tickets, stock and your team — all in one place.",
+    "art_kicker": "Built for hotel operations",
+    "art_heading": "Every asset, ticket and delivery — tracked end to end.",
+    "art_points": [
+      "Scan a barcode, raise a ticket, follow it from open to resolved.",
+      "Expiry-aware stock, purchase orders and printable labels.",
+      "Role-based access — everyone sees exactly what their role allows."
+    ]
+  },
+
+  "tabs": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "dashboard",
+      "subtitle": "Assets, tickets and their lifecycle"
+    },
+    {
+      "id": "assets",
+      "label": "Assets",
+      "icon": "wrench",
+      "subtitle": "Condition, location and maintenance of every asset",
+      "description": "Add, edit, delete assets and register new ones",
+      "children": [
+        { "id": "all", "label": "All assets" },
+        { "id": "good", "label": "Good" },
+        { "id": "fair", "label": "Fair" },
+        { "id": "broken", "label": "Broken" }
+      ]
+    },
+    {
+      "id": "warehouse",
+      "label": "Warehouse",
+      "icon": "package",
+      "subtitle": "Stock, purchase bills, batches and work orders",
+      "description": "Stock, purchase bills, batches and work orders",
+      "children": [
+        { "id": "wh-items", "label": "Items", "subtitle": "Stock levels, SKUs and critical levels" },
+        { "id": "wh-bills", "label": "Purchase bills", "subtitle": "Purchase orders, approvals and deliveries" },
+        { "id": "wh-batches", "label": "Batches & barcodes", "subtitle": "Received batches, expiry dates and labels" },
+        { "id": "wh-orders", "label": "Work orders", "subtitle": "Stock issued to employees and receipt confirmation" }
+      ]
+    },
+    {
+      "id": "hr",
+      "label": "HR",
+      "icon": "users",
+      "subtitle": "Employees, attendance, users, roles and policy",
+      "description": "Employees, attendance, users, roles and policy",
+      "children": [
+        { "id": "hr-employees", "label": "Employees", "subtitle": "Staff records, photos and live presence" },
+        { "id": "hr-attendance", "label": "Attendance", "subtitle": "Clock in/out and worked vs expected hours" },
+        { "id": "hr-accounts", "label": "Users", "subtitle": "Login accounts, their roles and recovery requests" },
+        { "id": "hr-roles", "label": "Roles", "subtitle": "What each role can open, and whether it can sign in" },
+        { "id": "hr-policy", "label": "Policy", "subtitle": "Password rules, sign-in protection, sessions and attendance" }
+      ]
+    },
+    {
+      "id": "hotel",
+      "label": "Hotel architecture",
+      "icon": "building",
+      "subtitle": "Buildings, floors, rooms and the site plan",
+      "description": "Edit buildings, floors, rooms and the site plan",
+      "children": [
+        { "id": "ha-buildings", "label": "Buildings", "subtitle": "Buildings, their floors and rooms" },
+        { "id": "ha-floors", "label": "Floors", "subtitle": "Every floor, by building" },
+        { "id": "ha-rooms", "label": "Rooms", "subtitle": "Every room and its door number" }
+      ]
+    },
+    {
+      "id": "preferences",
+      "label": "Preferences",
+      "icon": "sliders",
+      "subtitle": "Branding, WhatsApp notifications and email",
+      "description": "Branding, WhatsApp and email settings",
+      "children": [
+        { "id": "branding", "label": "Branding" },
+        { "id": "whatsapp", "label": "WhatsApp" },
+        { "id": "email", "label": "Email" }
+      ]
+    },
+    {
+      "_comment": "Example of a tab of your own -- set enabled to true to see it.",
+      "id": "help",
+      "enabled": false,
+      "label": "Help",
+      "icon": "info",
+      "subtitle": "How we use this system",
+      "children": [
+        {
+          "id": "help-guide",
+          "label": "Guide",
+          "type": "page",
+          "html": [
+            "<h2>Welcome</h2>",
+            "<p>Scan an asset's barcode on the Dashboard to raise a ticket for it.</p>"
+          ]
+        },
+        { "id": "help-site", "label": "Our website", "type": "iframe", "url": "https://example.com" },
+        { "id": "help-support", "label": "Contact support", "type": "link", "url": "https://example.com/support" }
+      ]
+    }
+  ]
+}

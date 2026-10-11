@@ -25,6 +25,7 @@ maintenance/support ticket must be linked to a specific physical asset via barco
 | In-app notifications (`inbox/`) | **New.** One `Notification` row per user, listed under the bell icon in the header (polled every 20s). `inbox.notify()`/`notify_admins()` are called by warehouse approvals/deliveries, ticket assign/resolve and account-recovery requests. A `register_delivery_hook()` seam mirrors each one to WhatsApp when that's switched on in Preferences. |
 | Accounts (`auth_engine/` + `hr/routes.py`) | **New.** Role presets (Administrator / Manager / Storekeeper / HR officer / Technician) that set the auth role plus permission strings in one step. Creating an account issues a one-time temporary password; the owner must replace it on first login (enforced server-side, not just in the UI). Forgot-password emails a 1-hour single-use reset link to the recovery email (`auth_engine/mailer.py`, SMTP via env vars, printed to the console when SMTP isn't configured). "Can't access your account" files a recovery request; an admin approving it deactivates (never deletes) the old login and issues a new one. |
 | Hotel architecture (`hotel/`) | **New.** Buildings → floors → rooms with derived IDs (`A` → `A_2` → `A_2_204`), kept in sync when a building is edited; a site-plan whiteboard (SVG shapes linked to buildings); a PDF of the whole layout. View for everyone, edit admin-only. |
+| Navigation config (`config/ui.json` + `demo/ui_config.py`) | **New.** Tabs, sub-tabs, names, icons, order, page headings, custom tabs (HTML page / embedded URL / link) and sign-in texts come from one JSON file, re-read on change without a restart. The grantable permissions follow the visible tabs. See "Customizing tabs and names" below. |
 | PDF (Arabic-safe text), i18n, Excel | Warehouse PDFs done (Latin text only). Arabic-safe PDF text, i18n and Excel still not included. |
 
 **A bug worth knowing about**: `auth_engine`'s `DEFAULT_PERMISSIONS` (there is none here — new users get zero permissions until explicitly granted) means a freshly-created non-admin user can't see the Warehouse or HR tabs at all until an admin grants them via the Security panel. This is a *faithful reproduction* of a real gap in `module_app` itself (its `DEFAULT_PERMISSIONS` string omits `warehouse`/`hr-management` too — see `src/models/junctions.py:24`), not a bug introduced here.
@@ -71,6 +72,122 @@ Everything above, plus login/logout, the 5-attempt lockout, `require_permission`
 presence-timeout enforcement, has been exercised end-to-end with curl/pytest-style checks
 during development (not just read through) — see the module docstrings for what each piece
 replaces from `module_app`.
+
+## Customizing tabs and names (`config/ui.json`)
+
+The left panel is built from one JSON file, `config/ui.json`: which tabs exist and in what order,
+their names, icons, page titles, sub-tabs, tabs of your own, and the sign-in page texts. Edit it,
+save, **reload the page** — no restart. (Point the `UI_CONFIG` environment variable at another
+file to use that instead.) The company name and logo are not in this file; they're set live in
+**Preferences → Branding**.
+
+```jsonc
+{
+  "app": {
+    "sidebar_subtitle": "Operations suite",   // under the company name in the sidebar
+    "sidebar_section": "Workspace",           // small heading above the tabs
+    "footer": "Ticket Engine POC",            // bottom of the sidebar
+    "default_tab": "dashboard"                // tab opened on first sign-in
+  },
+  "login": { "tagline": "...", "heading": "...", "lead": "...",
+             "art_kicker": "...", "art_heading": "...", "art_points": ["...", "..."] },
+  "tabs": [
+    { "id": "warehouse", "label": "Stores", "icon": "package",
+      "title": "Stores", "subtitle": "Stock and deliveries", "description": "Shown in HR → Roles",
+      "children": [
+        { "id": "wh-items", "label": "Stock items", "subtitle": "..." },
+        { "id": "wh-bills", "label": "Purchase orders" },
+        { "id": "wh-batches", "enabled": false }
+      ] }
+  ]
+}
+```
+
+What you can do:
+
+| To… | Do this |
+|---|---|
+| Rename a tab or sub-tab | Change its `label`. The page heading follows (`title` / `subtitle` override it); for sub-tabs the heading defaults to "Tab · Sub-tab". The new name also shows in HR → Users / Roles. |
+| Reorder | Move entries up or down in `tabs` / `children`. |
+| Remove | Delete the entry, or set `"enabled": false` (easier to bring back). A removed tab also stops being grantable in HR → Roles. |
+| Change an icon | `icon` is a name — `dashboard`, `wrench`, `package`, `users`, `building`, `sliders`, `home`, `calendar`, `chart`, `clipboard`, `link`, `globe`, `map`, `shield`, `mail`, `file`, `info`, `bell`, `truck`, `key`, `user`, `printer`, `barcode` — or raw SVG markup for a 24×24 icon (e.g. `"<circle cx='12' cy='12' r='9'/>"`). |
+| Add a tab of your own | A new entry with an unused `id` (lowercase letters, digits, `-`, `_`) and a `type`: `"page"` (`"html"`: a string, or a list of lines), `"iframe"` (`"url"`: embeds that page) or `"link"` (`"url"`: opens it in a new browser tab). Give it `"children"` instead to make it a group of sub-tabs, each with its own `type`. |
+| Restrict a custom tab | Add `"permission": "some-key"`. It then appears in HR → Users / Roles to grant like any other tab; without it, everyone sees the tab. |
+| Add a sub-tab to Warehouse, HR or Hotel architecture | Add a child with a new `id` and a `type`, as above. |
+
+The built-in tabs and their sub-tab ids — `dashboard`; `assets` (`all`, `good`, `fair`, `broken`);
+`warehouse` (`wh-items`, `wh-bills`, `wh-batches`, `wh-orders`); `hr` (`hr-employees`,
+`hr-attendance`, `hr-accounts`, `hr-roles`, `hr-policy`); `hotel` (`ha-buildings`, `ha-floors`,
+`ha-rooms`); `preferences` (`branding`, `whatsapp`, `email`) — are wired to code, so keep their
+`id`s; their permission is fixed too (the server checks it). Leaving a tab's `children` out keeps
+all its sub-tabs; listing them makes the list exact. Hiding an Assets filter hides its stat card,
+and hiding a Preferences section hides its card. Assets and Preferences can't take custom sub-tabs
+(their links filter or scroll rather than open pages). A disabled example `help` tab at the end of
+the file shows all three custom types.
+
+Hiding a tab is a navigation change, not a security boundary: its API stays protected only by
+the permission it already had. HTML in `"page"` is shown as written, so only trusted people should
+be able to edit this file. Mistakes never break the app: an unusable entry is skipped, invalid
+JSON keeps the last good version (or the built-in defaults on first start), and the problem is
+logged by the server and shown to admins as a message after they sign in.
+
+### How it works (for whoever changes this code next)
+
+Before this, the sidebar, the sub-tab bars and the page headings were hard-coded in three
+places: buttons in `scan.html`, `TAB_META`/`PANE_META` in `core.js`, and the list of grantable
+permissions, which `demo/app.py` got by parsing the sidebar HTML at startup. All three now come
+from `config/ui.json`. **The tabs' content is unchanged**: each built-in tab's `<section id="tab-…">`
+and its sub-panes are still written in `scan.html` and filled by their own JS file. The config only
+decides which of them can be reached, in what order and under what name.
+
+```
+config/ui.json ──► demo/ui_config.py ──► GET /ui-config.json ──► core.js buildNavigation()
+                   (check + fill defaults)                        (sidebar, sub-tab bars, headings)
+                          │
+                          └──► auth_engine.replace_permissions()  (HR → Users / Roles switches)
+```
+
+| File | Role |
+|---|---|
+| `config/ui.json` | The file you edit. Only the values you list matter; anything left out takes the default. |
+| `demo/ui_config.py` | Reads the file and turns it into a complete config (`normalize()`). `BUILTIN_TABS` is the list of built-in tabs: each one's permission, default label/icon, sub-tab ids, and how its sub-tabs behave (`pane` = real sub-tab, `filter` = Assets condition filter, `scroll` = Preferences card). `current()` caches the result by the file's modification time. |
+| `demo/app.py` | Calls `ui_config.current()` before each request (cheap, since it only re-reads when the file changed) and serves the result at `/ui-config.json`. The old `_SidebarPermissions` HTML parser is gone. |
+| `auth_engine/permissions.py` | New `replace_permissions()`: swaps the whole permission list in one step, so a request on another gunicorn thread never sees it half-built while the config reloads. |
+| `demo/static/scan.html` | The sidebar `<nav id="sb-nav">` and the `.subtabs` bars are now empty; the sign-in texts have ids so they can be replaced. |
+| `demo/static/js/core.js` | `boot()` fetches the config first, then `buildNavigation()` creates the sidebar buttons, sub-tab buttons, `TAB_META`/`PANE_META`, and the sections/panes for custom tabs. Clicks are handled by one listener on the sidebar and one for all `.subtabs`, because the buttons don't exist when the script loads. Tab icons now live in `ICONS`. |
+| `demo/static/js/hr.js` | The "Dashboard" label in the permission switches and the roles matrix comes from the config (`tabLabel('dashboard')`). |
+| `demo/static/css/app.css` | Styles for `"page"` / `"iframe"` content (`.custom-page`, `.custom-embed`). |
+
+Decisions worth knowing:
+- **The server checks the file, not the browser.** Python fills in defaults and drops anything it
+  can't use, with a readable warning; the browser just draws what it gets. Warnings go to the server
+  log and, after sign-in, to admins only.
+- **The config is served at `/ui-config.json`, outside `/api/`, on purpose.** The sign-in screen
+  needs it, and every `/api/` request goes through the session checks (stale heartbeat, forced
+  password change) that could refuse it.
+- **Built-in ids and permissions can't be changed from the file.** Routes check fixed strings
+  (`@require_permission('warehouse')`), and the JS looks up panes by id (`switchSubtab('wh', 'wh-bills')`).
+  A `"permission"` set on a built-in tab is ignored, with a warning.
+- **A hidden tab is hidden, not deleted.** Its section stays in the page (other code still updates
+  it, e.g. the dashboard counters after a ticket changes). `switchTab()`/`switchSubtab()` refuse a tab or
+  sub-tab that isn't in the config and fall back to the first allowed one, so a notification
+  pointing at a hidden tab doesn't break anything.
+- **Permissions follow the visible tabs.** On each reload of the file, the permission list is rebuilt
+  from the visible tabs, labelled with their names. A role that already had a hidden tab's permission
+  keeps it in the database, so showing the tab again restores access.
+- **Reserved ids:** `wh` and `ha` are the sub-tab groups of Warehouse and Hotel architecture,
+  so a custom tab can't use them (a custom tab's id is also its group name).
+
+To add a new **built-in** tab later (one with real code behind it): write its
+`<section id="tab-xyz">` in `scan.html` (with `<div class="subtabs" data-group="…">` and
+`.subpane`s if it has sub-tabs), its JS file registering `TAB_LOADERS.xyz`, and an entry in
+`BUILTIN_TABS` in `demo/ui_config.py`. Then list it in `config/ui.json`. A tab with only
+static content or a link needs none of that: a `"type"` in the JSON is enough.
+
+Tested by running the app headless (puppeteer) against a copy of the database with a modified
+config: renamed and reordered tabs, a custom sub-tab inside Warehouse, a hidden tab and a hidden
+filter, a custom tab with all three types, the remembered tab after a reload, the collapsed
+sidebar, the `tech` user's restricted view, editing the file while the app runs, and invalid JSON.
 
 ## Testing each feature, practically
 
@@ -121,6 +238,24 @@ Demo accounts: `admin`/`admin123` (full access), `tech`/`tech123` (no `warehouse
   chosen, so the WhatsApp hook actually has someone to notify) → **Start work** → add a
   comment → **Resolve** with a note. Every step shows up in the History timeline.
 
+**2a. Assigning and referring tickets**
+- **Assignment** (admins): every active ticket's detail view has an Assignment panel — assign
+  or reassign it to any active user at any stage, with an optional note. A ticket that is
+  *assigned* but names nobody is flagged **No assignee** in the lists (and can't be started)
+  until someone is picked. An in-progress ticket that changes hands goes back to *Assigned*.
+- **Referral** (the assignee): "Can't do this one? **Ask to refer it to someone else**" —
+  suggest a person (or let an admin choose) and give a reason. The ticket stays with you
+  until an admin decides; you can withdraw the request meanwhile.
+- **Decision** (admins): pending requests are listed on the Dashboard (**Referral requests**)
+  and flagged **Referral requested** on the ticket. In the ticket: pick who gets it (the
+  suggested person is pre-selected, any other name can be chosen), add a comment, then
+  **Approve & assign** or **Decline**. Assigning the ticket directly also closes the request.
+- **Notifications** (bell + WhatsApp when on), never to the person who acted:
+  new assignee ← "New ticket assigned"; previous assignee ← "reassigned"; ticket creator ←
+  "now assigned to …"; admins ← referral requested / withdrawn / decided by another admin;
+  requester ← approved (with who got it) or declined, plus the admin's comment; assignee and
+  creator ← new comments. Every step is also on the ticket's History timeline.
+
 **2b. Assets tab**
 - Sidebar → **Assets**: every asset with ID, name, category, condition (good / fair / broken),
   location, its current ticket and a comment. The three cards at the top (Good green, Fair
@@ -139,6 +274,12 @@ Demo accounts: `admin`/`admin123` (full access), `tech`/`tech123` (no `warehouse
   choice is remembered per browser); on a phone-width screen it slides in over the page
   instead. Warehouse and HR each split into sub-tabs, and the app remembers which sub-tab
   you were on. Every table row opens a detail view.
+- **Back** (← in the header) returns to the previous tab / sub-tab; the phone's back gesture
+  and the browser's Back button do the same (with a detail window open, they close it first).
+- On a phone, the notification and account menus open full-width under the header.
+- Tabs, sub-tabs, their names and order come from `config/ui.json` — rename a tab there,
+  reload, and the sidebar, page heading and HR → Roles all show the new name (see
+  "Customizing tabs and names" above).
 
 **4. Preferences (admin only)**
 - **Branding**: change the company name / upload a logo — the sidebar, sign-in screen and
@@ -272,7 +413,7 @@ instance to get actual delivery once it's paired.
 
 ## Adapting this for a real app
 
-1. Rename `Asset`/`Ticket` fields to match the domain (e.g. add `room_number`, `equipment_type`).
+1. Rename tabs, sub-tabs and sign-in texts in `config/ui.json` (no code changes needed), then rename `Asset`/`Ticket` fields to match the domain (e.g. add `room_number`, `equipment_type`).
 2. Edit `ALLOWED_TRANSITIONS` in `ticket_engine/models.py` for the real workflow (add stages, change who can do what).
 3. Point `shared_db.db` and `auth_engine.User` at the host app's own `db`/user table instead of these standalone ones (see "Two modules, wired together" above).
 4. Add domain-specific `PRE_TRANSITION_HOOKS` (validation/warnings) and `POST_TRANSITION_HOOKS` (side effects like notifications) instead of editing route handlers.

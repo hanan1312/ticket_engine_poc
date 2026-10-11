@@ -91,3 +91,31 @@ class TicketEvent(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     actor = db.relationship('User')
+
+
+# A request by a ticket's assignee to hand it to someone else. Nothing changes until an admin
+# decides: approving assigns the ticket (to the suggested person or anyone the admin picks),
+# rejecting leaves it with the requester. At most one pending request per ticket.
+REFERRAL_STATUSES = ('pending', 'approved', 'rejected', 'cancelled')
+
+
+class TicketReferral(db.Model):
+    __tablename__ = 'ticket_engine_referrals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket_engine_tickets.id'), nullable=False, index=True)
+    requested_by_id = db.Column(db.Integer, db.ForeignKey('auth_engine_users.id'), nullable=False)
+    to_user_id = db.Column(db.Integer, db.ForeignKey('auth_engine_users.id'))  # suggestion; None = "admin picks"
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    decided_by_id = db.Column(db.Integer, db.ForeignKey('auth_engine_users.id'))
+    decided_at = db.Column(db.DateTime)
+    decision_note = db.Column(db.Text)
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('auth_engine_users.id'))  # who got it, if approved
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    ticket = db.relationship('Ticket', backref=db.backref('referrals', lazy='dynamic'))
+    requested_by = db.relationship('User', foreign_keys=[requested_by_id])
+    to_user = db.relationship('User', foreign_keys=[to_user_id])
+    decided_by = db.relationship('User', foreign_keys=[decided_by_id])
+    assigned_to = db.relationship('User', foreign_keys=[assigned_to_id])

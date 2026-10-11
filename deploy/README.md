@@ -29,8 +29,12 @@
 1. Copy the project to the server (from your machine):
    ```bash
    rsync -av --exclude venv --exclude node_modules --exclude __pycache__ \
+     --exclude 'notifications/.wwebjs_auth' --exclude 'notifications/.wwebjs_cache' \
      ticket_engine_poc/ ubuntu@<server-ip>:~/ticket_engine_poc/
    ```
+   Never copy `notifications/.wwebjs_auth` (your local WhatsApp session) to the server: a
+   session from another machine makes the service try to restore it instead of showing a QR
+   code, and it usually hangs on "Starting…". Each machine pairs on its own.
 2. On the server:
    ```bash
    cd ~/ticket_engine_poc
@@ -66,6 +70,12 @@ cd ~/ticket_engine_poc && sudo bash deploy/install.sh   # deploy a new version o
 sudo -u ticketengine sqlite3 /opt/ticket-engine/database/ticket_engine.db ".backup '/tmp/te-backup.db'"   # backup
 ```
 
+WhatsApp needs a Chrome/Chromium on the server. `WITH_WHATSAPP=1` installs Google Chrome
+(x86_64) or Chromium from the xtradeb PPA (ARM/Ampere). The service uses, in order:
+`PUPPETEER_EXECUTABLE_PATH`, `/usr/bin/google-chrome(-stable)`, `/usr/bin/chromium(-browser)`,
+`/snap/bin/chromium`, then the Chrome `npm install` downloaded into `~/.cache/puppeteer`; it
+logs which one at start-up, and the pairing window shows the error if none works.
+
 WhatsApp pairing: start the service (`sudo systemctl start ticket-engine-whatsapp`), switch it on
 in Preferences, then click the WhatsApp pill in the header to scan the QR code.
 
@@ -80,6 +90,7 @@ in Preferences, then click the WhatsApp pill in the header to scan the QR code.
 | `SESSION_COOKIE_SECURE` | `0` | Set `1` once HTTPS works |
 | `FLASK_DEBUG` | `0` | Only for `python demo/app.py` on your own machine. Never `1` on a server: the debugger allows remote code execution |
 | `NOTIFICATIONS_URL` | `http://127.0.0.1:5050` | WhatsApp service address |
+| `UI_CONFIG` | `/opt/ticket-engine/config/ui.json` | Tabs, sub-tabs and names (see the main README). `install.sh` replaces the default file with the repo's copy on every deploy, so to edit it on the server instead, copy it out (`sudo cp /opt/ticket-engine/config/ui.json /etc/ticket-engine/ui.json`), point this at the copy, and restart once. Later edits only need a page reload |
 
 ## Why one worker
 

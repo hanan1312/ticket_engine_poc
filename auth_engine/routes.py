@@ -77,6 +77,16 @@ def set_profile_provider(fn):
     _profile_provider = fn
 
 
+def display_name(user):
+    """The person's name for lists and messages (linked employee's name), else the username."""
+    if user is None:
+        return None
+    try:
+        return (_profile_provider(user) or {}).get('display_name') or user.username
+    except Exception:
+        return user.username
+
+
 def password_expired(user, policy=None):
     days = int((policy or get_policy())['password_expiry_days'] or 0)
     return bool(days and user.password_changed_at

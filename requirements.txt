@@ -2,5 +2,5 @@ Flask==2.3.3
 flask-sqlalchemy==3.1.1
 SQLAlchemy==2.0.51
 requests==2.32.3
-reportlab==5.0.1
+reportlab>=4.0,<6  # 5.x needs Python 3.9+; 4.4.x works the same on Python 3.8
 gunicorn==23.0.0

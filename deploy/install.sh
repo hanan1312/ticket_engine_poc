@@ -31,7 +31,32 @@ if [[ $WITH_WHATSAPP == 1 ]]; then
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt-get install -y nodejs
   fi
+  # A real (non-snap) Chrome/Chromium for whatsapp-web.js to drive.
+  if ! ls /usr/bin/google-chrome /usr/bin/google-chrome-stable /usr/bin/chromium >/dev/null 2>&1; then
+    case "$(dpkg --print-architecture)" in
+      amd64)
+        echo "    installing Google Chrome"
+        curl -fsSL -o /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        apt-get install -y /tmp/google-chrome.deb
+        rm -f /tmp/google-chrome.deb ;;
+      arm64)
+        # No Google Chrome build for ARM Linux, and Ubuntu's chromium is a snap that hangs under
+        # puppeteer -- the xtradeb PPA ships a normal .deb at /usr/bin/chromium.
+        echo "    installing Chromium (xtradeb PPA)"
+        apt-get install -y software-properties-common
+        add-apt-repository -y ppa:xtradeb/apps
+        apt-get update -y
+        apt-get install -y chromium ;;
+      *) echo "    WARNING: install Chrome/Chromium yourself and set PUPPETEER_EXECUTABLE_PATH" >&2 ;;
+    esac
+  fi
 fi
+
+# Flask 2.3 needs Python 3.8+ (Ubuntu 20.04 ships 3.8, 22.04 ships 3.10).
+if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 8))'; then
+  echo "Python $(python3 -V 2>&1) is too old -- 3.8 or newer is required." >&2; exit 1
+fi
+echo "    $(python3 -V)"
 
 echo "==> User and code"
 id -u "$APP_USER" >/dev/null 2>&1 || useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"

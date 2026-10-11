@@ -75,3 +75,27 @@ def run_post_transition_hooks(ticket, from_status, to_status):
             hook(ticket, from_status, to_status)
         except Exception as e:
             print(f"[ticket_engine] post-transition hook {getattr(hook, '__name__', hook)} failed: {e}")
+
+
+# Ticket activity that isn't a status transition -- assignment changes, referral requests and
+# decisions, comments -- for side effects such as notifications. Called after commit as
+# hook(ticket, event, actor, **info); exceptions are caught and logged, never re-raised.
+#   'assigned'            info: previous (User|None), assignee (User), note
+#   'referral_requested'  info: referral
+#   'referral_approved'   info: referral, previous (User|None), assignee (User)
+#   'referral_rejected'   info: referral
+#   'referral_cancelled'  info: referral, reason ('withdrawn' | 'reassigned' | 'closed')
+#   'comment'             info: note
+TICKET_EVENT_HOOKS = []
+
+
+def register_ticket_event_hook(hook):
+    TICKET_EVENT_HOOKS.append(hook)
+
+
+def run_ticket_event_hooks(ticket, event, actor, **info):
+    for hook in TICKET_EVENT_HOOKS:
+        try:
+            hook(ticket, event, actor, **info)
+        except Exception as e:
+            print(f"[ticket_engine] ticket-event hook {getattr(hook, '__name__', hook)} failed: {e}")
