@@ -1,0 +1,15 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node (WhatsApp service)
+node_modules/
+
+# Local data and secrets -- never commit these
+database/*
+!database/.gitkeep
+notifications/.wwebjs_auth/
+notifications/.wwebjs_cache/
+*.env
+!deploy/ticket-engine.env.example

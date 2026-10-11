@@ -1,6 +1,0 @@
-2026/10/01-00:12:21.562 9905e Reusing MANIFEST /home/hanan/work/github/ticket_engine_poc/notifications/.wwebjs_auth/session-lab/Default/Local Storage/leveldb/MANIFEST-000001
-2026/10/01-00:12:21.563 9905e Recovering log #3
-2026/10/01-00:12:21.563 9905e Reusing old log /home/hanan/work/github/ticket_engine_poc/notifications/.wwebjs_auth/session-lab/Default/Local Storage/leveldb/000003.log 
-2026/10/01-00:32:29.609 9905e Level-0 table #5: started
-2026/10/01-00:32:29.616 9905e Level-0 table #5: 22277 bytes OK
-2026/10/01-00:32:29.618 9905e Delete type=0 #3
